@@ -9,6 +9,7 @@ XPStyle on
 
 !include "MUI2.nsh"
 !include "FileFunc.nsh"
+!include "WinMessages.nsh"
 
 !define MUI_ABORTWARNING
 @@ICON_DEFINES@@
@@ -67,9 +68,22 @@ source_official:
   StrCpy $SindrePipIndex "https://pypi.org/simple"
 FunctionEnd
 
+Function SetDependencyProgress
+  SendMessage $mui.InstFilesPage.ProgressBar ${PBM_SETPOS} $0 0
+  SendMessage $mui.InstFilesPage.Text ${WM_SETTEXT} 0 "STR:$1"
+  DetailPrint "$1"
+FunctionEnd
+
 Function RunUvCommand
-  ExecWait $SindreCommand $SindreExitCode
+  StrCpy $0 "60"
+  StrCpy $1 "正在安装 Python 依赖（numpy 等）..."
+  Call SetDependencyProgress
+  nsExec::ExecToLog $SindreCommand
+  Pop $SindreExitCode
   StrCmp $SindreExitCode "0" 0 uv_failed
+  StrCpy $0 "95"
+  StrCpy $1 "Python 依赖安装完成"
+  Call SetDependencyProgress
   Return
 uv_failed:
   MessageBox MB_ICONSTOP|MB_OK "安装器命令执行失败。请检查网络、软件源或安装日志。"
@@ -78,6 +92,7 @@ FunctionEnd
 
 @@SIDECAR_FUNCTION@@
 @@PYTHON_FUNCTION@@
+@@UV_LAUNCH_FUNCTION@@
 
 Section "核心程序" SEC_MAIN
   SectionIn RO

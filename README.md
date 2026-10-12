@@ -197,6 +197,15 @@ F:\My_Github\SindreInstallerUI\tools\nsis
 
 当前原生构建入口是 `sindre_installer` Python 包，不提供独立 CLI。包内自带固定版本的 NSIS 和 uv，调用方不需要预先安装这两个工具。
 
+支持两类应用目录：
+
+- 常规 Windows 程序：目录中有 `DemoApp.exe`、DLL 和资源目录时，传入 `executable=Path("DemoApp.exe")`，自动使用原生 EXE 启动。
+- Python/uv 程序：目录中有 `main.py`、模块、资源和配置时，传入 `executable=Path("main.py")`，自动使用内置 uv 启动；也可以不传 `executable`，并设置 `run_mode="uv"` 与 `python_entrypoint="main.py"`。uv 模式不需要另写 `launcher.exe`，安装器会生成 `run-app.cmd`。
+
+`run_mode="auto"` 按启动文件后缀选择模式：`.py` 使用 uv，`.exe` 使用原生启动。依赖同步在 NSIS 安装页内自动执行，安装页会显示 Python 环境、依赖（例如 numpy）和完成状态；uv 控制台不会单独弹出。
+
+`source="official"` 使用官方 PyPI，`source="tsinghua"` 使用清华源，`source="custom"` 需要同时提供 `uv_index_url` 和 `pip_index_url`。源地址会写入安装脚本的 `uv sync`/`uv pip sync`，并写入 Python 应用的 `run-app.cmd`。
+
 ```python
 from pathlib import Path
 

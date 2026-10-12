@@ -91,13 +91,14 @@ class InstallerConfig:
     Args:
         app_name: 应用显示名称。
         version: 四段以内的数字版本号，例如 ``1.2.0``。
-        executable: 主程序 EXE。
+        executable: 主程序 EXE；uv 模式下也可传入 Python 启动文件（``.py``）。
         output_dir: 安装包输出目录。
         payload_dir: 可选的应用目录，目录内容会被完整复制到安装目录。
         python_dir: 可选的 uv 构建 Python 目录，安装后放在 ``python`` 下。
         python_project: 可选的 pyproject 项目目录，安装后用于执行 ``uv sync``。
         requirements_file: 可选的 requirements 文件。
         python_version: 没有内置 Python 时由 uv 安装的版本。
+        python_entrypoint: uv 模式下启动的项目相对路径，例如 ``main.py``。
         source: ``official``、``tsinghua`` 或 ``custom``。
         uv_index_url: 自定义 uv 索引地址。
         pip_index_url: 自定义 uv pip 索引地址。
@@ -106,18 +107,20 @@ class InstallerConfig:
         license_file: 可选许可协议文本。
         payload_mode: ``auto``、``embedded`` 或 ``sidecar``。
         max_embedded_size: 自动模式下允许嵌入安装器的最大字节数。
+        run_mode: ``auto``、``exe`` 或 ``uv``。自动模式在没有 EXE 时使用 uv。
     """
 
     app_name: str
     version: str
-    executable: Path
-    output_dir: Path
+    executable: Path | None = None
+    output_dir: Path = Path(".")
 
     payload_dir: Path | None = None
     python_dir: Path | None = None
     python_project: Path | None = None
     requirements_file: Path | None = None
     python_version: str | None = None
+    python_entrypoint: str | None = None
 
     source: str = "official"
     uv_index_url: str | None = None
@@ -129,6 +132,7 @@ class InstallerConfig:
 
     payload_mode: str = "auto"
     max_embedded_size: int = 1_800_000_000
+    run_mode: str = "auto"
 
 
 @dataclass
@@ -245,8 +249,24 @@ def validate_config(config: InstallerConfig) -> None:
         raise ValueError("app_name 不能为空，且不能包含 Windows 文件名非法字符")
     if not _VERSION_RE.fullmatch(config.version):
         raise ValueError("version 必须是数字版本号，例如 1.2.0")
-    if config.executable.suffix.lower() != ".exe" or not config.executable.is_file():
-        raise FileNotFoundError(f"找不到有效的 EXE：{config.executable}")
+    if config.run_mode not in {"auto", "exe", "uv"}:
+        raise ValueError("run_mode 必须是 auto、exe 或 uv")
+    run_mode = _effective_run_mode(config)
+    if run_mode == "exe":
+        if config.executable is None:
+            raise ValueError("run_mode='exe' 时必须提供 executable")
+        if config.executable.suffix.lower() != ".exe" or not config.executable.is_file():
+            raise FileNotFoundError(f"找不到有效的 EXE：{config.executable}")
+    elif config.executable is not None and config.executable.suffix.lower() not in {".py", ".exe"}:
+        raise ValueError("uv 模式的启动文件必须是 .py")
+    elif config.executable is not None and not config.executable.is_file():
+        raise FileNotFoundError(f"找不到 Python 启动文件：{config.executable}")
+    elif config.python_entrypoint:
+        entrypoint = Path(config.python_entrypoint)
+        if entrypoint.is_absolute() or ".." in entrypoint.parts:
+            raise ValueError("python_entrypoint 必须是项目目录内的相对路径")
+    elif config.payload_dir is None and config.python_project is None and config.python_dir is None:
+        raise ValueError("uv 模式必须提供 payload_dir、python_project 或 python_dir")
     for label, path in (
         ("payload_dir", config.payload_dir),
         ("python_dir", config.python_dir),
@@ -272,19 +292,72 @@ def validate_config(config: InstallerConfig) -> None:
     _resolve_profile(config)
 
 
-def _stage_payload(config: InstallerConfig, payload: Path, uv_path: Path) -> str:
+def _effective_run_mode(config: InstallerConfig) -> str:
+    """解析最终启动方式。"""
+
+    if config.run_mode == "uv":
+        return "uv"
+    if config.run_mode == "exe":
+        return "exe"
+    if config.executable is None or config.executable.suffix.lower() == ".py":
+        return "uv"
+    return "exe"
+
+
+def _project_target(
+    config: InstallerConfig,
+    payload: Path,
+    python_target: Path | None,
+) -> Path | None:
+    """确定安装包内的 Python 项目目录。"""
+
+    if config.python_project:
+        if config.python_dir and config.python_project.resolve() == config.python_dir.resolve():
+            return python_target
+        if config.payload_dir and config.python_project.resolve() == config.payload_dir.resolve():
+            return payload
+        return payload / "python_project"
+    if config.payload_dir:
+        return payload
+    if config.python_dir:
+        return python_target
+    return None
+
+
+def _write_uv_launcher(
+    payload: Path,
+    project_target: Path,
+    entrypoint: str,
+    default_index: str | None = None,
+) -> None:
+    """在 payload 根目录生成使用内置 uv 启动源码的批处理文件。"""
+
+    relative_project = project_target.relative_to(payload).as_posix()
+    project_arg = "%ROOT%." if relative_project == "." else f"%ROOT%{relative_project}"
+    entry_arg = (
+        f"%ROOT%{entrypoint.replace('/', chr(92))}"
+        if relative_project == "."
+        else f"%ROOT%{relative_project.replace('/', chr(92))}\\{entrypoint.replace('/', chr(92))}"
+    )
+    index_arg = f' --default-index "{default_index}"' if default_index else ""
+    launcher = (
+        "@echo off\r\n"
+        "setlocal\r\n"
+        "set \"ROOT=%~dp0\"\r\n"
+        f'"%ROOT%uv.exe" run --project "{project_arg}"{index_arg} "{entry_arg}" %*\r\n'
+        "exit /b %ERRORLEVEL%\r\n"
+    )
+    (payload / "run-app.cmd").write_text(launcher, encoding="ascii")
+
+
+def _stage_payload(
+    config: InstallerConfig,
+    payload: Path,
+    uv_path: Path,
+    uv_index_url: str | None = None,
+) -> tuple[str | None, str | None, str | None]:
     if config.payload_dir:
         _copy_tree_contents(config.payload_dir, payload)
-
-    try:
-        main_executable = config.executable.relative_to(config.payload_dir) if config.payload_dir else Path(config.executable.name)
-    except ValueError:
-        main_executable = Path(config.executable.name)
-
-    target_exe = payload / main_executable
-    if not target_exe.exists():
-        target_exe.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(config.executable, target_exe)
 
     shutil.copy2(uv_path, payload / "uv.exe")
 
@@ -293,21 +366,46 @@ def _stage_payload(config: InstallerConfig, payload: Path, uv_path: Path) -> str
         python_target = payload / "python"
         _copy_tree_contents(config.python_dir, python_target)
 
-    if config.python_project:
-        if config.python_dir and config.python_project.resolve() == config.python_dir.resolve():
-            project_target = python_target
-        else:
-            project_target = payload / "python_project"
-            _copy_tree_contents(config.python_project, project_target)
-        if project_target is not None:
-            project_target.mkdir(parents=True, exist_ok=True)
+    project_target = _project_target(config, payload, python_target)
+    if config.python_project and project_target not in {payload, python_target}:
+        _copy_tree_contents(config.python_project, project_target)
+    if project_target is not None:
+        project_target.mkdir(parents=True, exist_ok=True)
 
     if config.requirements_file:
-        requirements_target = (python_target or payload) / "requirements.txt"
+        requirements_target = (python_target or project_target or payload) / "requirements.txt"
         requirements_target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(config.requirements_file, requirements_target)
 
-    return main_executable.as_posix()
+    if _effective_run_mode(config) == "uv":
+        if project_target is None:
+            raise ValueError("uv 模式必须有可运行的项目目录")
+        entrypoint = config.python_entrypoint
+        if entrypoint is None and config.executable and config.executable.suffix.lower() == ".py":
+            try:
+                entrypoint = config.executable.relative_to(config.payload_dir or config.python_project)
+            except (TypeError, ValueError):
+                entrypoint = Path(config.executable.name)
+            entrypoint = entrypoint.as_posix()
+        entrypoint = entrypoint or "main.py"
+        entrypoint_path = project_target / entrypoint
+        if not entrypoint_path.is_file():
+            raise FileNotFoundError(f"找不到 Python 入口文件：{entrypoint_path}")
+        relative_project = project_target.relative_to(payload).as_posix()
+        _write_uv_launcher(payload, project_target, entrypoint, uv_index_url)
+        return None, relative_project, entrypoint
+
+    if config.executable is None:
+        raise ValueError("EXE 模式必须提供 executable")
+    try:
+        main_executable = config.executable.relative_to(config.payload_dir) if config.payload_dir else Path(config.executable.name)
+    except ValueError:
+        main_executable = Path(config.executable.name)
+    target_exe = payload / main_executable
+    if not target_exe.exists():
+        target_exe.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(config.executable, target_exe)
+    return main_executable.as_posix(), None, None
 
 
 def _split_sidecar(payload: Path, destination: Path, chunk_size: int = 512 * 1024 * 1024) -> None:
@@ -359,7 +457,8 @@ def _render_script(
     profile: SourceProfile,
     stage: Path,
     installer_path: Path,
-    main_executable: str,
+    main_executable: str | None,
+    run_mode: str,
     embedded: bool,
     sidecar_name: str,
     license_path: Path | None,
@@ -376,10 +475,22 @@ def _render_script(
             f'!define MUI_ICON "{_nsis_path(icon_path)}"\n'
             f'!define MUI_UNICON "{_nsis_path(uninstaller_icon)}"'
         )
-    finish_defines = (
-        f'!define MUI_FINISHPAGE_RUN "$INSTDIR\\{main_executable.replace("/", "\\\\")}"\n'
-        '!define MUI_FINISHPAGE_RUN_TEXT "安装完成后启动应用"'
-    )
+    if run_mode == "exe":
+        assert main_executable is not None
+        finish_defines = (
+            f'!define MUI_FINISHPAGE_RUN "$INSTDIR\\{main_executable.replace("/", "\\\\")}"\n'
+            '!define MUI_FINISHPAGE_RUN_TEXT "安装完成后启动应用"'
+        )
+        uv_launch_function = ""
+    else:
+        finish_defines = (
+            '!define MUI_FINISHPAGE_RUN "$INSTDIR\\run-app.cmd"\n'
+            '!define MUI_FINISHPAGE_RUN_TEXT "安装完成后启动应用"\n'
+            '!define MUI_FINISHPAGE_RUN_FUNCTION LaunchUvApplication'
+        )
+        uv_launch_function = '''Function LaunchUvApplication
+  ExecShell "open" "$INSTDIR\\run-app.cmd"
+FunctionEnd'''
     license_page = f'!insertmacro MUI_PAGE_LICENSE "{_nsis_path(license_path)}"' if license_path else ""
 
     if embedded:
@@ -398,7 +509,25 @@ sidecar_missing:
   Abort
 FunctionEnd'''
 
-    has_python = bool(config.python_dir or config.python_project or config.requirements_file or config.python_version)
+    project_dir = ""
+    if config.python_dir and config.python_project and config.python_project.resolve() == config.python_dir.resolve():
+        project_dir = "python"
+    elif config.python_project and config.payload_dir and config.python_project.resolve() == config.payload_dir.resolve():
+        project_dir = ""
+    elif config.python_project:
+        project_dir = "python_project"
+    elif config.payload_dir:
+        project_dir = ""
+    elif config.python_dir:
+        project_dir = "python"
+    project_root = "$INSTDIR" if not project_dir else f"$INSTDIR\\{project_dir}"
+    has_python = bool(
+        config.python_dir
+        or config.python_project
+        or config.requirements_file
+        or config.python_version
+        or run_mode == "uv"
+    )
     python_function = ""
     python_call = ""
     if has_python:
@@ -412,20 +541,21 @@ FunctionEnd'''
             python_lines.extend(
                 [
                     '  IfFileExists "$INSTDIR\\python\\python.exe" python_ready',
+                    f'  IfFileExists "{project_root}\\.venv\\Scripts\\python.exe" python_ready',
                     f'  StrCpy $SindreCommand \'"$INSTDIR\\uv.exe" python install {config.python_version}\'',
                     "  Call RunUvCommand",
-                    f'  StrCpy $SindreCommand \'"$INSTDIR\\uv.exe" venv "$INSTDIR\\python\\.venv" --python {config.python_version}\'',
+                    f'  StrCpy $SindreCommand \'"$INSTDIR\\uv.exe" venv "{project_root}\\.venv" --python {config.python_version}\'',
                     "  Call RunUvCommand",
                     "python_ready:",
                 ]
             )
-        if config.python_project:
-            project_dir = "python" if config.python_dir and config.python_project.resolve() == config.python_dir.resolve() else "python_project"
-            lock_flag = "--locked " if (config.python_project / "uv.lock").is_file() else ""
+        if config.python_project or config.payload_dir or config.python_dir:
+            source_project = config.python_project or config.payload_dir or config.python_dir
+            lock_flag = "--locked " if (source_project / "uv.lock").is_file() else ""
             python_lines.extend(
                 [
-                    f'  IfFileExists "$INSTDIR\\{project_dir}\\pyproject.toml" 0 python_requirements',
-                    f'  StrCpy $SindreCommand \'"$INSTDIR\\uv.exe" sync --project "$INSTDIR\\{project_dir}" {lock_flag}--default-index "$SindreUvIndex"\'',
+                    f'  IfFileExists "{project_root}\\pyproject.toml" 0 python_requirements',
+                    f'  StrCpy $SindreCommand \'"$INSTDIR\\uv.exe" sync --project "{project_root}" {lock_flag}--default-index "$SindreUvIndex"\'',
                     "  Call RunUvCommand",
                     "  Return",
                 ]
@@ -433,7 +563,11 @@ FunctionEnd'''
         python_lines.append("python_requirements:")
         if config.requirements_file:
             req_path = "python\\requirements.txt" if config.python_dir else "requirements.txt"
-            python_arg = '"$INSTDIR\\python\\python.exe"' if config.python_dir else '"$INSTDIR\\python\\.venv\\Scripts\\python.exe"'
+            python_arg = (
+                '"$INSTDIR\\python\\python.exe"'
+                if config.python_dir and not config.python_version
+                else f'"{project_root}\\.venv\\Scripts\\python.exe"'
+            )
             python_lines.extend(
                 [
                     f'  IfFileExists "$INSTDIR\\{req_path}" 0 python_done',
@@ -441,7 +575,20 @@ FunctionEnd'''
                     "  Call RunUvCommand",
                 ]
             )
-        python_lines.extend(["python_done:", "FunctionEnd"])
+        if config.requirements_file:
+            python_lines.extend([
+                "python_done:",
+                '  StrCpy $0 "100"',
+                '  StrCpy $1 "安装文件准备完成"',
+                "  Call SetDependencyProgress",
+            ])
+        else:
+            python_lines.extend([
+                '  StrCpy $0 "100"',
+                '  StrCpy $1 "安装文件准备完成"',
+                "  Call SetDependencyProgress",
+            ])
+        python_lines.append("FunctionEnd")
         python_function = "\n".join(line for line in python_lines if line != "")
         python_call = "  Call PreparePython"
 
@@ -451,7 +598,7 @@ FunctionEnd'''
         "@@PRODUCT_KEY@@": product_key,
         "@@INSTALLER_PATH@@": _nsis_path(installer_path),
         "@@INSTALL_DIR@@": _nsis_text(install_dir),
-        "@@MAIN_EXECUTABLE@@": _nsis_text(main_executable),
+        "@@MAIN_EXECUTABLE@@": _nsis_text(main_executable or ""),
         "@@SOURCE_NAME@@": profile.name,
         "@@UV_INDEX_URL@@": _nsis_text(profile.uv_index_url),
         "@@PIP_INDEX_URL@@": _nsis_text(profile.pip_index_url),
@@ -461,6 +608,7 @@ FunctionEnd'''
         "@@LICENSE_PAGE@@": license_page,
         "@@SIDECAR_FUNCTION@@": sidecar_function,
         "@@PYTHON_FUNCTION@@": python_function,
+        "@@UV_LAUNCH_FUNCTION@@": uv_launch_function,
         "@@PAYLOAD_INSTALL@@": payload_install,
         "@@PYTHON_CALL@@": python_call,
     }
@@ -482,7 +630,20 @@ def build_installer(config: InstallerConfig) -> BuildResult:
         RuntimeError: NSIS 编译失败或未生成安装器。
     """
 
-    config = InstallerConfig(**{**config.__dict__, "executable": Path(config.executable), "output_dir": Path(config.output_dir)})
+    values = dict(config.__dict__)
+    for field_name in (
+        "executable",
+        "output_dir",
+        "payload_dir",
+        "python_dir",
+        "python_project",
+        "requirements_file",
+        "installer_icon",
+        "license_file",
+    ):
+        if values[field_name] is not None:
+            values[field_name] = Path(values[field_name])
+    config = InstallerConfig(**values)
     validate_config(config)
     profile = _resolve_profile(config)
     nsis = _resource_path("nsis", "windows-x64", "makensis.exe")
@@ -506,7 +667,9 @@ def build_installer(config: InstallerConfig) -> BuildResult:
         stage = Path(temporary)
         payload = stage / "payload"
         payload.mkdir()
-        main_executable = _stage_payload(config, payload, uv)
+        main_executable, project_relative, python_entrypoint = _stage_payload(
+            config, payload, uv, profile.uv_index_url
+        )
 
         files = _payload_files(payload)
         embedded = config.payload_mode == "embedded" or (
@@ -520,6 +683,9 @@ def build_installer(config: InstallerConfig) -> BuildResult:
             "app_name": config.app_name,
             "version": config.version,
             "main_executable": main_executable,
+            "run_mode": _effective_run_mode(config),
+            "python_project": project_relative,
+            "python_entrypoint": python_entrypoint,
             "embedded_payload": embedded,
             "source": profile.name,
             "files": files,
@@ -544,6 +710,7 @@ def build_installer(config: InstallerConfig) -> BuildResult:
             stage,
             installer_path,
             main_executable,
+            _effective_run_mode(config),
             embedded,
             payload_output.name,
             license_path,

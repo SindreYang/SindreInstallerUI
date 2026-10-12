@@ -4,7 +4,7 @@ from pathlib import Path
 import unittest
 
 from sindre_installer import InstallerConfig, SourceProfile, validate_config
-from sindre_installer.api import _resolve_profile
+from sindre_installer.api import _effective_run_mode, _resolve_profile
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -39,6 +39,29 @@ class ApiTests(unittest.TestCase):
                     uv_index_url="https://example.com/uv/simple",
                 )
             )
+
+    def test_run_mode_follows_startup_suffix(self) -> None:
+        self.assertEqual(
+            _effective_run_mode(InstallerConfig("Demo", "1.0.0", TEST_EXE, Path("F:/tmp/test-output"))),
+            "exe",
+        )
+        self.assertEqual(
+            _effective_run_mode(
+                InstallerConfig(
+                    "Demo",
+                    "1.0.0",
+                    Path("F:/tmp/main.py"),
+                    Path("F:/tmp/test-output"),
+                )
+            ),
+            "uv",
+        )
+        self.assertEqual(
+            _effective_run_mode(
+                InstallerConfig("Demo", "1.0.0", None, Path("F:/tmp/test-output"), run_mode="uv")
+            ),
+            "uv",
+        )
 
     def test_validate_rejects_invalid_version(self) -> None:
         with self.assertRaises(ValueError):
