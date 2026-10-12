@@ -4,7 +4,7 @@ from pathlib import Path
 import unittest
 
 from sindre_installer import InstallerConfig, SourceProfile, validate_config
-from sindre_installer.api import _effective_run_mode, _resolve_profile
+from sindre_installer.api import _apply_config_defaults, _effective_run_mode, _resolve_profile
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -39,6 +39,14 @@ class ApiTests(unittest.TestCase):
                     uv_index_url="https://example.com/uv/simple",
                 )
             )
+
+    def test_config_defaults_are_inferred(self) -> None:
+        config = _apply_config_defaults(
+            InstallerConfig(payload_dir=Path("F:/Demo/Release"))
+        )
+        self.assertEqual(config.app_name, "Release")
+        self.assertEqual(config.version, "1.0.0")
+        self.assertEqual(config.output_dir, Path("dist"))
 
     def test_run_mode_follows_startup_suffix(self) -> None:
         self.assertEqual(

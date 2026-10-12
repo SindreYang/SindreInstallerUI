@@ -206,24 +206,34 @@ F:\My_Github\SindreInstallerUI\tools\nsis
 
 `source="official"` 使用官方 PyPI，`source="tsinghua"` 使用清华源，`source="custom"` 需要同时提供 `uv_index_url` 和 `pip_index_url`。源地址会写入安装脚本的 `uv sync`/`uv pip sync`，并写入 Python 应用的 `run-app.cmd`。
 
+最简调用只需要传入启动文件，版本默认为 `1.0.0`，输出目录默认为 `dist`，应用名和 payload 目录会自动推断：
+
 ```python
 from pathlib import Path
+from sindre_installer import pack_exe
 
+# F:/Demo/build/Release/DemoApp.exe 旁边的 DLL、assets、config 会一起打包
+result = pack_exe(Path("F:/Demo/build/Release/DemoApp.exe"))
+
+# .py 自动使用 uv，F:/Demo/app 下的模块和资源会一起打包
+result = pack_exe(Path("F:/Demo/app/main.py"), source="tsinghua")
+print(result.installer_path)
+```
+
+需要完整控制时再使用配置对象：
+
+```python
+from pathlib import Path
 from sindre_installer import InstallerConfig, build_installer
 
-result = build_installer(
-    InstallerConfig(
-        app_name="DemoApp",
-        version="1.0.0",
-        executable=Path("dist/DemoApp.exe"),
-        output_dir=Path("release"),
-        payload_dir=Path("dist/app"),
-        python_dir=Path("python"),
-        python_project=Path("python"),
-        source="tsinghua",
-    )
-)
-print(result.installer_path)
+result = build_installer(InstallerConfig(
+    app_name="DemoApp",
+    version="2.0.0",
+    executable=Path("dist/DemoApp.exe"),
+    output_dir=Path("release"),
+    payload_dir=Path("dist/app"),
+    source="official",
+))
 ```
 
 支持的源配置为 `official`、`tsinghua` 和 `custom`。安装器也支持 `/SINDRE_SOURCE=official`、`/SINDRE_SOURCE=tsinghua`、`/SINDRE_UV_INDEX=` 和 `/SINDRE_PIP_INDEX=` 参数覆盖默认源。

@@ -30,7 +30,7 @@ import shutil
 import subprocess
 import tempfile
 import zipfile
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -110,10 +110,10 @@ class InstallerConfig:
         run_mode: ``auto``、``exe`` 或 ``uv``。自动模式在没有 EXE 时使用 uv。
     """
 
-    app_name: str
-    version: str
+    app_name: str = ""
+    version: str = "1.0.0"
     executable: Path | None = None
-    output_dir: Path = Path(".")
+    output_dir: Path = Path("dist")
 
     payload_dir: Path | None = None
     python_dir: Path | None = None
@@ -617,6 +617,21 @@ FunctionEnd'''
     return template
 
 
+def _apply_config_defaults(config: InstallerConfig) -> InstallerConfig:
+    """补齐应用名称和默认输出目录。"""
+
+    if config.app_name:
+        return config
+    candidates = (
+        config.executable.stem if config.executable else "",
+        config.payload_dir.name if config.payload_dir else "",
+        config.python_project.name if config.python_project else "",
+        config.python_dir.name if config.python_dir else "",
+    )
+    app_name = next((candidate for candidate in candidates if candidate), "")
+    return replace(config, app_name=app_name)
+
+
 def build_installer(config: InstallerConfig) -> BuildResult:
     """构建一个原生 NSIS 安装包。
 
@@ -643,7 +658,7 @@ def build_installer(config: InstallerConfig) -> BuildResult:
     ):
         if values[field_name] is not None:
             values[field_name] = Path(values[field_name])
-    config = InstallerConfig(**values)
+    config = _apply_config_defaults(InstallerConfig(**values))
     validate_config(config)
     profile = _resolve_profile(config)
     nsis = _resource_path("nsis", "windows-x64", "makensis.exe")
@@ -745,14 +760,19 @@ def build_installer(config: InstallerConfig) -> BuildResult:
     )
 
 
-def pack_exe(executable: Path, output_dir: Path, **options: Any) -> BuildResult:
-    """使用默认配置快速打包任意 EXE。"""
+def pack_exe(executable: Path, output_dir: Path = Path("dist"), **options: Any) -> BuildResult:
+    """快速打包 EXE 或 Python 启动文件。
+
+    ``payload_dir`` 缺省时使用启动文件所在目录，因此 DLL、资源和 Python
+    模块会一起进入安装包。
+    """
 
     executable = Path(executable)
+    options.setdefault("app_name", executable.stem)
+    options.setdefault("version", "1.0.0")
+    options.setdefault("payload_dir", executable.parent)
     return build_installer(
         InstallerConfig(
-            app_name=options.pop("app_name", executable.stem),
-            version=options.pop("version", "1.0.0"),
             executable=executable,
             output_dir=Path(output_dir),
             **options,
