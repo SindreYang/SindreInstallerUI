@@ -1,0 +1,100 @@
+RequestExecutionLevel admin
+Name "@@APP_NAME@@"
+OutFile "@@INSTALLER_PATH@@"
+InstallDir "@@INSTALL_DIR@@"
+InstallDirRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\@@PRODUCT_KEY@@" "InstallLocation"
+ShowInstDetails show
+ShowUninstDetails show
+XPStyle on
+
+!include "MUI2.nsh"
+!include "FileFunc.nsh"
+
+!define MUI_ABORTWARNING
+@@ICON_DEFINES@@
+@@FINISH_DEFINES@@
+
+!insertmacro MUI_PAGE_WELCOME
+@@LICENSE_PAGE@@
+!insertmacro MUI_PAGE_COMPONENTS
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
+!insertmacro MUI_PAGE_FINISH
+
+!insertmacro MUI_LANGUAGE "SimpChinese"
+
+Var SindreSource
+Var SindreUvIndex
+Var SindrePipIndex
+Var SindreCommand
+Var SindreExitCode
+Var SindrePythonMirror
+
+Function .onInit
+  StrCpy $SindreSource "@@SOURCE_NAME@@"
+  StrCpy $SindreUvIndex "@@UV_INDEX_URL@@"
+  StrCpy $SindrePipIndex "@@PIP_INDEX_URL@@"
+  StrCpy $SindrePythonMirror "@@PYTHON_MIRROR_URL@@"
+  StrCpy $0 ""
+  ${GetOptions} $CMDLINE "/SINDRE_SOURCE=" $0
+  StrCmp $0 "" +2
+  StrCpy $SindreSource $0
+  Call ResolveSource
+  StrCpy $0 ""
+  ${GetOptions} $CMDLINE "/SINDRE_UV_INDEX=" $0
+  StrCmp $0 "" +2
+  StrCpy $SindreUvIndex $0
+  StrCpy $0 ""
+  ${GetOptions} $CMDLINE "/SINDRE_PIP_INDEX=" $0
+  StrCmp $0 "" +2
+  StrCpy $SindrePipIndex $0
+  StrCpy $0 ""
+  ${GetOptions} $CMDLINE "/SINDRE_PYTHON_MIRROR=" $0
+  StrCmp $0 "" +2
+  StrCpy $SindrePythonMirror $0
+FunctionEnd
+
+Function ResolveSource
+  StrCmp $SindreSource "tsinghua" source_tsinghua
+  StrCmp $SindreSource "official" source_official
+  Return
+source_tsinghua:
+  StrCpy $SindreUvIndex "https://pypi.tuna.tsinghua.edu.cn/simple"
+  StrCpy $SindrePipIndex "https://pypi.tuna.tsinghua.edu.cn/simple"
+  Return
+source_official:
+  StrCpy $SindreUvIndex "https://pypi.org/simple"
+  StrCpy $SindrePipIndex "https://pypi.org/simple"
+FunctionEnd
+
+Function RunUvCommand
+  ExecWait $SindreCommand $SindreExitCode
+  StrCmp $SindreExitCode "0" 0 uv_failed
+  Return
+uv_failed:
+  MessageBox MB_ICONSTOP|MB_OK "安装器命令执行失败。请检查网络、软件源或安装日志。"
+  Abort
+FunctionEnd
+
+@@SIDECAR_FUNCTION@@
+@@PYTHON_FUNCTION@@
+
+Section "核心程序" SEC_MAIN
+  SectionIn RO
+  SetOutPath "$INSTDIR"
+@@PAYLOAD_INSTALL@@
+  WriteUninstaller "$INSTDIR\uninstall.exe"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\@@PRODUCT_KEY@@" "DisplayName" "@@APP_NAME@@"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\@@PRODUCT_KEY@@" "DisplayVersion" "@@VERSION@@"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\@@PRODUCT_KEY@@" "InstallLocation" "$INSTDIR"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\@@PRODUCT_KEY@@" "UninstallString" "$INSTDIR\uninstall.exe"
+SectionEnd
+
+Section -PostInstall
+@@PYTHON_CALL@@
+SectionEnd
+
+Section Uninstall
+  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\@@PRODUCT_KEY@@"
+  RMDir /r "$INSTDIR"
+SectionEnd

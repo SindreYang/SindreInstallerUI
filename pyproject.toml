@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sindre-installer"
+version = "0.1.0"
+description = "通过 Python API 构建原生 NSIS 安装包"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "SindreYang" }]
+dependencies = []
+
+[tool.hatch.build.targets.wheel]
+packages = ["sindre_installer"]
+include = [
+  "sindre_installer/libs/**/*",
+]

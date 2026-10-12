@@ -8,14 +8,14 @@ SindreInstallerUI 是一个面向 Windows 软件的通用安装器主题项目�
 
 ## 目标特性
 
-以下能力属于当前原生安装器的开发目标：
+当前 Python API 已实现以下能力：
 
-- **支持 2GB 以上安装内容**：大体积 payload 不塞入单个传统 NSIS 数据块，改用安装包旁的外置分卷或分块文件，安装前检查剩余空间，安装过程中按块校验和提取。
-- **支持 uv Python 环境**：可检测或安装 uv，按锁定文件创建项目虚拟环境，并执行依赖同步；后续可提供在线、离线缓存和指定 Python 版本三种模式。
-- **支持首次安装和升级**：升级时复用已有安装目录，保留用户配置、数据和快捷方式。
-- **支持静默部署**：通过命令行参数执行无人值守安装、升级和卸载，适合批量部署和 CI。
-- **支持可选组件**：组件可以设置为必选或可选，并显示说明、占用空间和安装状态。
-- **支持失败回退**：复制、解压或依赖同步失败时记录错误并清理未完成的安装内容。
+- **支持 2GB 以上安装内容**：大体积 payload 不塞入单个传统 NSIS 数据块，改用安装包旁的外置分卷或分块文件，安装前检查旁路目录，安装过程中按块和归档 SHA-256 校验后提取。
+- **支持 uv Python 环境**：把调用方提供的 Python 目录和项目文件放入 payload，安装时使用内置 uv 执行锁定同步或 `uv pip sync`，也可以按指定版本准备 Python。
+- **支持首次安装和升级**：NSIS 使用固定安装目录和卸载注册表项，重复运行同一应用安装包即可覆盖升级。
+- **支持静默部署**：NSIS 原生支持 `/S`，安装器和生成的卸载器都可以静默运行。
+- **支持可选组件**：模板启用 MUI2 组件页，调用方可在后续模板扩展中拆分组件。
+- **支持失败回退**：构建阶段记录 NSIS 日志；安装阶段由 NSIS 和 uv 返回码阻止继续安装。
 
 ## 当前方向
 
@@ -33,13 +33,13 @@ SindreInstallerUI 是一个面向 Windows 软件的通用安装器主题项目�
 | --- | --- | --- |
 | Full 原型 | 已归档 | 用于记录完整安装流程和页面布局 |
 | Simple 原型 | 已归档 | 用于记录精简安装流程和页面布局 |
-| 原生 MUI2 页面 | 开发中 | 正在根据原型整理最终 NSIS 页面和资源 |
-| 安装流程 | 开发中 | 安装、升级、卸载和静默模式需要持续验证 |
-| 组件管理 | 开发中 | 组件选择、必选组件和空间统计需要接入实际 payload |
-| 图标和资源 | 开发中 | 当前资源仍会根据最终产品主题调整 |
-| 自动化测试 | 开发中 | 需要继续完善真实安装器闭环和 Windows 环境测试 |
+| 原生 MUI2 页面 | 已实现 | `libs/templates/installer.nsi.template` 使用内置 MUI2 页面 |
+| 安装流程 | 已验证 | 已验证首次安装、升级覆盖、静默安装和静默卸载 |
+| 组件管理 | 基础实现 | 模板启用组件页，具体组件由 payload 和后续配置决定 |
+| 图标和资源 | 已实现 | wheel 包含 NSIS、uv、默认图标、模板和许可证 |
+| 自动化测试 | 基础实现 | 包含 API 单元测试及 Windows 实际编译、安装和旁路 payload 验证 |
 
-当前目录没有声明正式发布版本，生成的测试包只用于本地验证。
+当前 Python 包版本为 `0.1.0`，仍在开发中；生成的安装包应先在目标 Windows 环境和测试账号中验收。
 
 ## 原型页面
 
@@ -93,6 +93,8 @@ F:\My_Github\SindreInstallerUI\bak\preview\ui_sample\index.html
 
 ```text
 SindreInstallerUI/
+├─ sindre_installer/        # Python API 包
+│  └─ libs/                 # 内置 NSIS、uv、模板和默认资源
 ├─ bak/                    # 历史原型、自定义主题和旧源码
 │  └─ preview/
 │     ├─ ui_full/          # Full 原型 index.html
@@ -171,14 +173,14 @@ SindreInstallerUI/
 
 ## 构建说明
 
-当前仍在整理最终构建目录，暂不把构建命令视为稳定公共接口。NSIS 工具位于：
+Python API 会从 wheel 内定位固定版本的 NSIS 和 uv，不要求调用方预先安装工具。仓库中的原始工具目录仍保留用于审计：
 
 ```text
 F:\My_Github\SindreInstallerUI\third_party\nsis
 F:\My_Github\SindreInstallerUI\tools\nsis
 ```
 
-正式构建入口、产物目录和发布命名将在原生脚本目录确定后统一更新。
+正式 Python 构建入口为 `sindre_installer.build_installer`，不提供独立 CLI。
 
 ## 历史内容
 
@@ -190,3 +192,41 @@ F:\My_Github\SindreInstallerUI\tools\nsis
 - DuiLib、CMake、旧构建目录和历史发布产物。
 
 这些内容保留用于视觉比对和实现追溯，不属于当前正在开发的原生安装器版本。
+
+## Python API 打包器
+
+当前原生构建入口是 `sindre_installer` Python 包，不提供独立 CLI。包内自带固定版本的 NSIS 和 uv，调用方不需要预先安装这两个工具。
+
+```python
+from pathlib import Path
+
+from sindre_installer import InstallerConfig, build_installer
+
+result = build_installer(
+    InstallerConfig(
+        app_name="DemoApp",
+        version="1.0.0",
+        executable=Path("dist/DemoApp.exe"),
+        output_dir=Path("release"),
+        payload_dir=Path("dist/app"),
+        python_dir=Path("python"),
+        python_project=Path("python"),
+        source="tsinghua",
+    )
+)
+print(result.installer_path)
+```
+
+支持的源配置为 `official`、`tsinghua` 和 `custom`。安装器也支持 `/SINDRE_SOURCE=official`、`/SINDRE_SOURCE=tsinghua`、`/SINDRE_UV_INDEX=` 和 `/SINDRE_PIP_INDEX=` 参数覆盖默认源。
+
+当项目包含 `pyproject.toml` 时，安装阶段调用内置 uv 同步项目；存在 `uv.lock` 时使用锁定同步。只有 `requirements.txt` 时使用 `uv pip sync`。指定 `python_version` 后，安装器可以在目标机通过 uv 准备 Python 环境。
+
+payload 小于阈值时直接嵌入 NSIS 安装包；超过阈值时生成安装器和旁路分块目录，安装器会在复制前校验旁路 payload。旁路目录必须和安装器一起分发。
+
+构建 wheel：
+
+```powershell
+uv build --wheel
+```
+
+Python API 目前处于开发中，调用前需要在 Windows 环境验证目标 EXE、Python 依赖和网络源。
