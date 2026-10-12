@@ -1,0 +1,47 @@
+# 构建输出
+/build/
+/dist/
+/out/
+/release/
+/artifacts/
+/CMakeFiles/
+/cmake-build-*/
+
+# 本地缓存与解释器生成文件
+__pycache__/
+*.py[cod]
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.venv/
+venv/
+env/
+ENV/
+.coverage
+htmlcov/
+.cache/
+
+# 编辑器、系统和临时文件
+.vs/
+.idea/
+.vscode/
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*.orig
+*.rej
+Thumbs.db
+Desktop.ini
+
+# 临时目录只保留 README 使用的截图
+tmp/*
+!tmp/screenshots/
+!tmp/screenshots/**
+
+# 本地运行时截图（项目根目录）
+/*.png

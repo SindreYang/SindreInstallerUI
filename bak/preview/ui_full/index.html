@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>应用名称 安装器</title>
+  <style>
+    @font-face { font-family: "Alibaba PuHuiTi"; src: url("resources/skin/fonts/AlibabaPuHuiTi-2-55-Regular.ttf") format("truetype"); font-weight: 400; }
+    @font-face { font-family: "Alibaba PuHuiTi"; src: url("resources/skin/fonts/AlibabaPuHuiTi-2-75-SemiBold.ttf") format("truetype"); font-weight: 600; }
+    :root { color-scheme: light; --ink: #16263b; --muted: #60758c; --line: #c7d4e2; --accent: #238bd0; --success: #21ae77; --danger: #df5b69; }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body { margin: 0; display: grid; place-items: center; min-width: 980px; min-height: 620px; overflow: hidden; color: var(--ink); font-family: "Alibaba PuHuiTi", "Microsoft YaHei", sans-serif; background: #061027 url("resources/skin/glass-background.png") center / cover no-repeat; }
+    button, input { font: inherit; }
+    button { border: 0; cursor: pointer; }
+    .installer { width: 980px; height: 620px; display: grid; grid-template-rows: 34px 1fr; overflow: hidden; border: 1px solid rgba(119, 149, 180, .58); border-radius: 10px; background: #f5f8fc; box-shadow: 0 30px 90px rgba(0, 0, 0, .42), 0 0 0 5px rgba(255, 255, 255, .08), inset 0 1px rgba(255, 255, 255, .8); }
+    .titlebar { display: flex; align-items: center; justify-content: space-between; min-height: 34px; padding: 0 12px 0 15px; color: #23344a; background: linear-gradient(180deg, #fff, #e8f0f7); border-bottom: 1px solid #b5c5d5; font-size: 11px; }
+    .titlebar-brand { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+    .titlebar-brand img { width: 20px; height: 20px; object-fit: contain; }
+    .window-controls { display: flex; align-items: center; gap: 5px; }
+    .window-controls button { width: 28px; height: 22px; color: #41566d; background: rgba(255, 255, 255, .42); border: 1px solid rgba(116, 142, 169, .35); border-radius: 4px; font-size: 12px; line-height: 1; }
+    .window-controls .window-close { color: #fff; background: #dc6470; border-color: #c64e5c; }
+    .window-body { display: grid; grid-template-columns: 218px 1fr; min-height: 0; }
+    .side-art { position: relative; display: flex; flex-direction: column; justify-content: space-between; padding: 28px 22px 22px; overflow: hidden; color: #fff;      background: radial-gradient(circle at 30% 18%, rgba(92, 125, 255, 0.28), transparent 38%), #101c60 url("resources/skin/installer-art.png") center bottom / 122% auto no-repeat;
+      border-right: 1px solid #08144a;
+    }
+    .side-art-brand { display: grid; gap: 7px; }
+    .side-art-brand img { width: 48px; height: 48px; object-fit: contain; padding: 6px; border: 1px solid rgba(205, 221, 255, 0.34); border-radius: 12px; background: rgba(11, 25, 93, 0.56); }
+    .side-art-brand strong { font-size: 17px; font-weight: 600; }
+    .side-art-brand span { color: #b4c6ff; font-size: 11px; }
+    .side-art-copy { color: #c6d3ff; font-size: 11px; line-height: 1.8; letter-spacing: 0.08em; }
+    .side-art-copy::before { content: ""; display: block; width: 34px; height: 1px; margin-bottom: 12px; background: rgba(191, 209, 255, 0.5); }
+    .workspace { padding: 0; background: #f5f8fc; color: #16263b; }
+    .topbar { align-items: center; padding: 0 30px; border-bottom: 1px solid #d4dde8; }
+    .topbar p { margin-bottom: 2px; color: #7990a8; font-size: 10px; letter-spacing: 0.16em; }
+    .topbar h1 { color: #1b2d42; font-size: 17px; }
+    .topbar-right { color: #68809a; gap: 12px; }
+    .top-progress { width: 88px; height: 4px; overflow: hidden; border-radius: 999px; background: #d5e0ea; }
+    .top-progress i { display: block; width: 16.67%; height: 100%; border-radius: inherit; background: #238bd0; transition: width 180ms ease; }
+    .topbar-right .close { display: none; }
+    .pages { background: #f5f8fc; }
+    .page { width: 100%; margin: 0; padding: 34px 46px 0; border: 0; border-radius: 0; background: #f5f8fc; box-shadow: none; }
+    .eyebrow { margin-bottom: 10px; color: #6d7f93; font-size: 10px; letter-spacing: 0.14em; }
+    .page h2 { color: #17283d; font-size: 28px; letter-spacing: -0.04em; }
+    .lead { margin-top: 10px; color: #586b80; font-size: 13px; }
+    .status-row, .notice, .license-box { border-color: #c7d4e2; background: rgba(255, 255, 255, 0.92); color: #24374c; box-shadow: 0 4px 14px rgba(48, 79, 111, 0.1); }
+    .status-row span, .notice p { color: #60758c; }
+    .license-box { color: #43576c; }
+    .path-row input { border-color: #bdcad8; color: #334b63; background: white; }
+    .check { color: #40566e; }
+    .primary, .secondary { min-width: 104px; height: 38px; border-radius: 6px; box-shadow: 0 2px 4px rgba(36, 67, 96, 0.12); font-size: 12px; }
+    .primary { background: linear-gradient(#48b7ed, #1479c7); border: 1px solid #1268ae; }
+    .primary:hover { filter: brightness(1.06); }
+    .secondary { color: #344a61; background: linear-gradient(#ffffff, #e5ebf2); border: 1px solid #aab9c9; }
+    .secondary:hover { background: #ffffff; }
+    .actions { margin: 20px -46px 0; padding: 11px 46px; border-top: 1px solid #d0dae5; background: #edf2f7; }
+    .progress-head strong { color: #1e5f9f; }
+    .progress-head span { color: #60758c; }
+    .progress-track { background: #ced9e5; }
+    .progress-value { background: linear-gradient(90deg, #2e98dc, #65c9f2); box-shadow: none; }
+    .notice::before { background: #21ae77; }
+    .notice.danger::before { background: #df5b69; }
+    .finish-copy .notice { color: #24374c; }
+
+    /* 每个步骤只保留当前页面，避免页面内容叠加。 */
+    .pages .page { display: none !important; visibility: hidden; opacity: 0; pointer-events: none; }
+    .pages .page.active { display: grid !important; visibility: visible; opacity: 1; pointer-events: auto; }
+    .pages .page[hidden] { display: none !important; }
+
+    @media (max-height: 680px) {
+      .installer { transform: scale(0.92); transform-origin: center; }
+    }
+  </style>
+  <style>
+    .workspace { min-height: 0; display: grid; grid-template-rows: 54px 1fr; }
+    .topbar { display: flex; justify-content: space-between; min-height: 54px; }
+    .topbar-right { display: flex; align-items: center; }
+    .pages { position: relative; min-height: 0; }
+    .page { position: absolute; inset: 0; display: none; grid-template-rows: auto 1fr auto; }
+    .page.active { display: grid !important; }
+    .page > div:first-child { min-width: 0; }
+    .eyebrow { margin: 0 0 8px; }
+    .lead { line-height: 1.6; }
+    .welcome-content { display: flex; flex-direction: column; justify-content: center; gap: 24px; max-width: 570px; }
+    .welcome-content p { margin: 0; color: #53677c; font-size: 14px; line-height: 1.9; }
+    .status-row, .notice { display: flex; align-items: center; gap: 16px; min-height: 48px; padding: 0 15px; border: 1px solid var(--line); border-radius: 8px; }
+    .status-row strong { min-width: 72px; font-size: 12px; }
+    .status-row span, .notice p { margin: 0; font-size: 11px; }
+    .actions { display: flex; justify-content: flex-end; gap: 10px; }
+    .primary, .secondary { padding: 0 18px; color: white; font-weight: 600; }
+    .license-box { min-height: 124px; padding: 16px; border: 1px solid var(--line); border-radius: 8px; font-size: 11px; line-height: 1.8; }
+    .license-foot { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .check { display: flex; align-items: center; gap: 10px; font-size: 11px; }
+    .check input { width: 18px; height: 18px; accent-color: #238bd0; }
+    .field-label { display: block; margin-bottom: 8px; font-size: 11px; }
+    .path-row { display: flex; gap: 10px; }
+    .path-row input { min-width: 0; flex: 1; height: 42px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; outline: 0; font-size: 11px; }
+    .options-list { display: grid; align-content: center; gap: 10px; }
+    .task-title { margin: 12px 0 8px; color: #445a71; font-size: 11px; font-weight: 600; }
+    .task-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; }
+    .task-item { min-height: 28px; display: flex; align-items: center; gap: 9px; color: #40566e; font-size: 11px; }
+    .task-item input { accent-color: #238bd0; }
+    .tree-panel { align-self: center; overflow: hidden; border: 1px solid #c7d4e2; border-radius: 9px; background: rgba(255, 255, 255, .92); box-shadow: 0 4px 14px rgba(48, 79, 111, .08); }
+    .tree-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; border-bottom: 1px solid #d7e0e9; background: #f6f9fc; }
+    .tree-toolbar .check { color: #2d4761; font-weight: 600; }
+    .tree-size { color: #70849a; font-size: 10px; }
+    .tree-list { display: grid; max-height: 258px; overflow-y: auto; padding: 5px 0; scrollbar-color: #b9c9d8 transparent; scrollbar-width: thin; }
+    .tree-group { padding: 7px 14px 4px; color: #6d8298; font-size: 10px; font-weight: 600; letter-spacing: .05em; }
+    .tree-row { display: grid; grid-template-columns: 18px 1fr auto; gap: 10px; align-items: center; min-height: 45px; padding: 5px 14px 5px 28px; color: #304962; }
+    .tree-row:hover { background: #f5f9fd; }
+    .tree-copy strong, .tree-copy span { display: block; }
+    .tree-copy strong { color: #2d455e; font-size: 11px; }
+    .tree-copy span { margin-top: 3px; color: #7a8da1; font-size: 10px; }
+    .tree-row em { color: #71869a; font-size: 10px; font-style: normal; }
+    .progress-wrap { align-self: center; width: 100%; }
+    .progress-head { display: flex; justify-content: space-between; align-items: end; }
+    .progress-head strong { font-size: 38px; letter-spacing: -.06em; }
+    .progress-track { height: 10px; margin-top: 20px; overflow: hidden; border-radius: 999px; background: #ced9e5; }
+    .progress-value { width: 34%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #2e98dc, #65c9f2); }
+    .notice { align-items: flex-start; padding: 14px 16px; }
+    .notice::before { content: ""; width: 4px; align-self: stretch; flex: 0 0 4px; border-radius: 999px; background: #21ae77; }
+    .notice.danger::before { background: #df5b69; }
+    .finish-copy { display: grid; align-content: start; gap: 12px; max-width: 610px; padding-top: 22px; }
+    .finish-summary { display: grid; grid-template-columns: 34px 1fr; gap: 13px; align-items: center; min-height: 94px; padding: 17px 18px; border: 1px solid #bfd5ca; border-radius: 8px; background: #f8fcfa; }
+    .finish-summary::before { content: "✓"; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; color: white; background: #21ae77; font-size: 18px; font-weight: 600; }
+    .finish-summary strong { display: block; margin-bottom: 5px; color: #1f5e48; font-size: 14px; }
+    .finish-summary p { margin: 0; color: #607a70; font-size: 11px; line-height: 1.65; }
+    .finish-detail { display: flex; align-items: center; gap: 12px; min-height: 38px; padding: 0 13px; border: 1px solid #d2dce6; border-radius: 7px; background: #f8fafc; color: #71849a; font-size: 10px; }
+    .finish-detail code { overflow: hidden; color: #3d566e; font: inherit; text-overflow: ellipsis; white-space: nowrap; }
+    .finish-options { display: flex; align-items: center; padding: 12px 14px; border: 1px solid #c7d4e2; border-radius: 8px; background: rgba(255, 255, 255, .92); }
+  </style></head>
+<body>
+  <main class="installer" aria-label="通用安装器 HTML 原型">
+    <header class="titlebar">
+      <div class="titlebar-brand"><img src="resources/skin/installer-mark.png" alt=""><span id="brand-name">应用名称</span></div>
+      <div class="window-controls"><button aria-label="最小化">—</button><button aria-label="最大化">□</button><button class="window-close" aria-label="关闭">×</button></div>
+    </header>
+
+    <div class="window-body">
+      <aside class="side-art">
+        <div class="side-art-brand"><img src="resources/skin/installer-mark.png" alt=""><strong>安装向导</strong><span>Windows 安装程序</span></div>
+        <div class="side-art-copy">稳定安装<br>安全回退</div>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+      <div><p id="mode-label">SETUP</p><h1 id="mode-title">安装向导</h1></div>
+          <div class="topbar-right"><span id="indicator">步骤 1 / 6</span><div class="top-progress"><i id="top-progress-value"></i></div></div>
+        </header>
+
+        <div class="pages">
+        <section class="page active" data-page="0">
+          <div><p class="eyebrow" id="welcome-eyebrow">开始使用</p><h2 id="welcome-title">欢迎使用</h2></div>
+          <div class="welcome-content"><div><p id="welcome-copy">这个向导将引导你完成安装配置。</p><p id="welcome-copy-secondary">你可以选择安装目录和快捷方式，遇到问题时会自动回滚。</p></div><div class="status-row"><strong id="welcome-status">准备就绪</strong><span id="welcome-status-detail">按“下一步”继续</span></div></div>
+          <div class="actions"><button class="primary" data-next>下一步</button></div>
+        </section>
+
+        <section class="page" data-page="1">
+          <div><p class="eyebrow">确认许可</p><h2>使用许可</h2><p class="lead">阅读许可协议，确认后继续。</p></div>
+          <div class="license-box">本程序使用开源许可证发布。保留版权与许可声明。</div>
+          <div class="license-foot"><label class="check"><input type="checkbox" checked>我已阅读并同意许可协议</label><div class="actions"><button class="secondary" data-prev>返回</button><button class="primary" data-next>继续</button></div></div>
+        </section>
+
+        <section class="page" data-page="2">
+          <div><p class="eyebrow" id="component-eyebrow">安装内容</p><h2 id="component-title">选择组件</h2><p class="lead" id="component-lead">选择要安装的功能，必选组件无法取消。</p></div>
+          <div class="tree-panel"><div class="tree-toolbar"><label class="check"><input id="selectAll" type="checkbox">全选组件</label><span class="tree-size">已选 <strong id="selectedSize">2.3 GB</strong></span></div><div class="tree-list"><div class="tree-group">运行环境</div><label class="tree-row"><input id="componentRuntime" type="checkbox" checked disabled data-component-size="1.8"><span class="tree-copy"><strong>核心运行库</strong><span>必选 · 基础运行文件</span></span><em>1.8 GB</em></label><label class="tree-row"><input id="componentCli" type="checkbox" checked data-component data-component-size="0.3"><span class="tree-copy"><strong>命令行工具</strong><span>终端命令与开发工具</span></span><em>320 MB</em></label><div class="tree-group">开发与资料</div><label class="tree-row"><input id="componentSdk" type="checkbox" checked data-component data-component-size="0.2"><span class="tree-copy"><strong>开发 SDK</strong><span>开发接口与集成文件</span></span><em>210 MB</em></label><label class="tree-row"><input id="componentDocs" type="checkbox" data-component data-component-size="0.1"><span class="tree-copy"><strong>示例与文档</strong><span>示例项目和本地文档</span></span><em>90 MB</em></label></div></div>
+          <div class="actions"><button class="secondary" data-prev>返回</button><button class="primary" data-next>下一步</button></div>
+        </section>
+
+        <section class="page" data-page="3">
+          <div><p class="eyebrow" id="location-eyebrow">安装配置</p><h2 id="location-title">安装位置</h2><p class="lead" id="location-lead">选择安装目录和常用入口。</p></div>
+          <div class="options-list"><div><label class="field-label" for="path">安装目录</label><div class="path-row"><input id="path" value="C:\Program Files\应用名称"><button id="choose-path" class="secondary">选择</button></div><div class="task-title">快捷方式</div><div class="task-grid"><label class="task-item"><input id="createShortcut" type="checkbox" checked>创建桌面快捷方式</label><label class="task-item"><input id="startMenu" type="checkbox" checked>创建开始菜单入口</label></div></div></div>
+          <div class="actions"><button class="secondary" data-prev>返回</button><button class="primary" data-next>安装</button></div>
+        </section>
+
+        <section class="page" data-page="4">
+          <div><p class="eyebrow" id="progress-eyebrow">正在处理</p><h2 id="progress-title">正在安装</h2><p class="lead" id="progress-lead">正在准备文件…</p></div>
+          <div class="progress-wrap"><div class="progress-head"><strong>34%</strong><span id="progress-message">正在复制文件</span></div><div class="progress-track"><div class="progress-value"></div></div></div>
+          <div class="actions"><button class="secondary" data-error>模拟失败</button><button class="primary" data-next>继续</button></div>
+        </section>
+
+        <section class="page" data-page="5">
+          <div><p class="eyebrow" id="finish-eyebrow">安装完成</p><h2 id="finish-title">安装完成</h2><p class="lead" id="finish-lead">程序已安装完成。</p></div>
+          <div class="finish-copy"><div class="finish-summary"><div><strong id="finish-status">安装成功</strong><p id="finish-copy">安装已经完成，现在可以开始使用。</p></div></div><div class="finish-detail"><span>安装位置</span><code id="install-path">C:\Program Files\应用名称</code></div><div class="finish-options"><label class="check"><input id="launchNow" type="checkbox" checked>安装完成后启动应用</label></div></div>
+          <div class="actions"><button class="primary">完成</button></div>
+        </section>
+
+        <section class="page" data-page="6">
+          <div><p class="eyebrow" id="error-eyebrow">需要处理</p><h2 id="error-title">安装未完成</h2><p class="lead" id="error-lead">已回滚未完成的文件。</p></div>
+          <div class="notice danger"><div><strong id="error-status">已安全回滚</strong><p id="error-copy">请重试，或查看日志。</p></div></div>
+          <div class="actions"><button class="primary" data-step="0">再次尝试</button></div>
+        </section>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const pages = [...document.querySelectorAll("[data-page]")];
+    const query = new URLSearchParams(window.location.search);
+    const productName = (query.get("product") || "应用名称").trim() || "应用名称";
+    const productInstallPath = `C:\\Program Files\\${productName}`;
+    const requestedMode = query.get("mode");
+    const mode = ["upgrade", "repair"].includes(requestedMode) ? requestedMode : "install";
+    const flow = mode === "install" ? [0, 1, 2, 3, 4, 5] : [0, 2, 3, 4, 5];
+    const indicator = document.querySelector("#indicator");
+    const progressValue = document.querySelector("#top-progress-value");
+    const selectAll = document.querySelector("#selectAll");
+    const componentInputs = [...document.querySelectorAll("[data-component]")];
+    const selectedSize = document.querySelector("#selectedSize");
+    const modeLabel = document.querySelector("#mode-label");
+    const modeTitle = document.querySelector("#mode-title");
+    const welcomeTitle = document.querySelector("#welcome-title");
+    const welcomeCopy = document.querySelector("#welcome-copy");
+    const welcomeCopySecondary = document.querySelector("#welcome-copy-secondary");
+    const locationTitle = document.querySelector("#location-title");
+    const locationLead = document.querySelector("#location-lead");
+    const installPath = document.querySelector("#path");
+    const choosePath = document.querySelector("#choose-path");
+    const componentTitle = document.querySelector("#component-title");
+    const componentLead = document.querySelector("#component-lead");
+    const progressTitle = document.querySelector("#progress-title");
+    const progressLead = document.querySelector("#progress-lead");
+    const progressMessage = document.querySelector("#progress-message");
+    const finishTitle = document.querySelector("#finish-title");
+    const finishLead = document.querySelector("#finish-lead");
+    const finishStatus = document.querySelector("#finish-status");
+    const finishCopy = document.querySelector("#finish-copy");
+    const errorTitle = document.querySelector("#error-title");
+    const errorLead = document.querySelector("#error-lead");
+    const errorCopy = document.querySelector("#error-copy");
+    const brandName = document.querySelector("#brand-name");
+    const installPathDetail = document.querySelector("#install-path");
+    let current = 0;
+
+    function applyMode() {
+      const isUpgrade = mode === "upgrade";
+      const isRepair = mode === "repair";
+      brandName.textContent = productName;
+      installPath.value = productInstallPath;
+      installPathDetail.textContent = productInstallPath;
+      document.title = isUpgrade ? `${productName} 升级` : isRepair ? `${productName} 修复` : `${productName} 安装器`;
+      modeLabel.textContent = isUpgrade ? "UPDATE" : isRepair ? "REPAIR" : "SETUP";
+      modeTitle.textContent = isUpgrade ? "升级向导" : isRepair ? "修复向导" : "安装向导";
+      welcomeTitle.textContent = isUpgrade ? "升级准备" : isRepair ? "修复准备" : "欢迎使用";
+      welcomeCopy.textContent = isUpgrade ? "检测到现有安装，将更新程序文件。" : isRepair ? "将检查并修复缺失或损坏的程序文件。" : "这个向导将引导你完成安装配置。";
+      welcomeCopySecondary.textContent = isUpgrade ? "你的设置、数据和快捷方式会保留。" : isRepair ? "用户设置和数据不会被删除。" : "你可以选择安装目录和快捷方式，遇到问题时会自动回滚。";
+      locationTitle.textContent = isUpgrade ? "升级位置" : isRepair ? "修复位置" : "安装位置";
+      locationLead.textContent = isUpgrade ? "使用当前安装目录，保留用户数据和配置。" : isRepair ? "使用当前安装目录修复程序文件。" : "选择安装目录和常用入口。";
+      installPath.readOnly = isUpgrade || isRepair;
+      choosePath.disabled = isUpgrade || isRepair;
+      componentTitle.textContent = isUpgrade ? "确认升级组件" : isRepair ? "确认修复组件" : "选择组件";
+      componentLead.textContent = isUpgrade ? "现有组件默认保留，新组件可在此选择。" : isRepair ? "选择需要检查和修复的组件。" : "选择要安装的功能，必选组件无法取消。";
+      progressTitle.textContent = isUpgrade ? "正在升级" : isRepair ? "正在修复" : "正在安装";
+      progressLead.textContent = isUpgrade ? "正在替换程序文件…" : isRepair ? "正在恢复程序文件…" : "正在准备文件…";
+      progressMessage.textContent = isUpgrade ? "正在更新组件" : isRepair ? "正在检查文件" : "正在复制文件";
+      finishTitle.textContent = isUpgrade ? "升级完成" : isRepair ? "修复完成" : "安装完成";
+      finishLead.textContent = isUpgrade ? "程序已升级完成。" : isRepair ? "程序已修复完成。" : "程序已安装完成。";
+      finishStatus.textContent = isUpgrade ? "升级成功" : isRepair ? "修复成功" : "安装成功";
+      finishCopy.textContent = isUpgrade ? "设置、数据和快捷方式已保留，现在可以继续使用。" : isRepair ? "程序文件已经恢复正常，现在可以继续使用。" : "安装已经完成，现在可以开始使用。";
+      errorTitle.textContent = isUpgrade ? "升级未完成" : isRepair ? "修复未完成" : "安装未完成";
+      errorLead.textContent = isUpgrade ? "已回滚更新文件，原版本仍可使用。" : isRepair ? "已回滚修复文件。" : "已回滚未完成的文件。";
+      errorCopy.textContent = isUpgrade ? "已安全回滚。请重试，原版本仍可使用。" : isRepair ? "已安全回滚。请重试，或查看日志。" : "请重试，或查看日志。";
+    }
+
+    function showStep(index) {
+      current = Math.max(0, Math.min(index, flow.length - 1));
+      const pageId = flow[current];
+      pages.forEach((page) => {
+        const active = Number(page.dataset.page) === pageId;
+        page.classList.toggle("active", active);
+        page.hidden = !active;
+      });
+      indicator.textContent = `步骤 ${current + 1} / ${flow.length}`;
+      progressValue.style.width = `${((current + 1) / flow.length) * 100}%`;
+    }
+
+    function showError() {
+      pages.forEach((page) => { page.classList.toggle("active", Number(page.dataset.page) === 6); page.hidden = Number(page.dataset.page) !== 6; });
+      indicator.textContent = "错误";
+      progressValue.style.width = "100%";
+    }
+
+    function showPageById(pageId) {
+      const step = flow.indexOf(pageId);
+      showStep(step < 0 ? 0 : step);
+    }
+
+    function updateComponentSummary() {
+      const total = 1.8 + componentInputs.filter((input) => input.checked).reduce((sum, input) => sum + Number(input.dataset.componentSize), 0);
+      selectedSize.textContent = `${total.toFixed(1)} GB`;
+      selectAll.checked = componentInputs.every((input) => input.checked);
+    }
+
+    selectAll.addEventListener("change", () => {
+      componentInputs.forEach((input) => { input.checked = selectAll.checked; });
+      updateComponentSummary();
+    });
+    componentInputs.forEach((input) => input.addEventListener("change", updateComponentSummary));
+    updateComponentSummary();
+    applyMode();
+    showStep(0);
+
+    document.addEventListener("click", (event) => {
+      const target = event.target.closest("[data-next], [data-prev], [data-error], [data-step]");
+      if (!target) return;
+      if (target.dataset.next !== undefined) showStep(current + 1);
+      else if (target.dataset.prev !== undefined) showStep(current - 1);
+      else if (target.dataset.error !== undefined) showError();
+      else showPageById(Number(target.dataset.step));
+    });
+  </script>
+</body>
+</html>
+
+
+

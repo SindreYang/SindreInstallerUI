@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Window size="980,620" mininfo="980,620" roundcorner="10,10" bkcolor="#FF061027" bkimage="glass-background.png">
+  <Font shared="true" id="0" name="阿里巴巴普惠体 2.0 55 Regular" size="13" default="true" />
+  <Font shared="true" id="1" name="阿里巴巴普惠体 2.0 75 SemiBold" size="12" />
+  <Font shared="true" id="2" name="阿里巴巴普惠体 2.0 75 SemiBold" size="28" />
+  <Font shared="true" id="3" name="阿里巴巴普惠体 2.0 55 Regular" size="11" />
+  <Font shared="true" id="4" name="阿里巴巴普惠体 2.0 55 Regular" size="11" />
+  <Font shared="true" id="5" name="阿里巴巴普惠体 2.0 75 SemiBold" size="17" />
+  <Font shared="true" id="6" name="阿里巴巴普惠体 2.0 55 Regular" size="14" />
+  <Font shared="true" id="7" name="阿里巴巴普惠体 2.0 55 Regular" size="10" />
+
+  <VerticalLayout name="root" bkcolor="#FFF5F8FC" bordercolor="#997795B4" bordersize="1">
+    <HorizontalLayout name="titlebar" height="34" childvalign="vcenter" bkimage="titlebar-bg.png" bkcolor="#FFF2F6FA" padding="15,0,10,0" bordercolor="#FFB5C5D5" bottombordersize="1">
+      <Control name="titlebarMark" width="20" height="20" bkimage="installer-mark.png" />
+      <Control width="8" />
+      <Label name="brandName" text="应用名称" font="1" textcolor="#FF23344A" />
+      <Control />
+      <Button name="btnMinimize" text="—" width="28" height="22" font="3" textcolor="#FF41566D" bkcolor="#70FFFFFF" hotbkcolor="#FFDCE7F0" borderround="4,4" bordersize="1" bordercolor="#59748EA9" />
+      <Control width="5" />
+      <Button name="btnMaximize" text="□" width="28" height="22" font="3" textcolor="#FF41566D" bkcolor="#70FFFFFF" hotbkcolor="#FFDCE7F0" borderround="4,4" bordersize="1" bordercolor="#59748EA9" />
+      <Control width="5" />
+      <Button name="btnClose" text="×" width="28" height="22" font="1" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" bkcolor="#FFDC6470" hotbkcolor="#FFC64E5C" borderround="4,4" bordersize="1" bordercolor="#FFC64E5C" />
+    </HorizontalLayout>
+
+    <HorizontalLayout name="windowBody">
+      <VerticalLayout name="brandRail" width="218" bkimage="installer-rail-bg.png" bkcolor="#FF101C60" padding="0,0,0,0" bordercolor="#FF08144A" rightbordersize="1">
+        <VerticalLayout name="sideBrand" padding="22,28,22,0">
+          <Control name="sideBrandMark" width="48" height="48" bkimage="installer-mark-side.png" />
+          <Control height="7" />
+          <Label name="sideBrandTitle" text="安装向导" font="5" textcolor="#FFFFFFFF" height="24" />
+          <Label name="brandPlatform" text="WINDOWS 安装程序" font="4" textcolor="#FFB4C6FF" height="18" />
+        </VerticalLayout>
+        <Control />
+        <VerticalLayout name="sideCopy" height="60" padding="22,0,22,22">
+          <Control height="12" />
+          <Label text="稳定安装" font="3" textcolor="#FFC6D3FF" height="18" />
+          <Label text="安全回退" font="3" textcolor="#FFC6D3FF" height="18" />
+        </VerticalLayout>
+      </VerticalLayout>
+
+      <VerticalLayout name="workspace" bkcolor="#FFF5F8FC">
+        <HorizontalLayout name="topbar" height="54" childvalign="vcenter" bkcolor="#FFF5F8FC" padding="30,0,30,0" bordercolor="#FFD4DDE8" bottombordersize="1">
+          <VerticalLayout width="240">
+            <Label name="brandCode" text="SETUP" font="4" textcolor="#FF7990A8" height="16" />
+            <Label name="windowTitle" text="安装向导" font="5" textcolor="#FF1B2D42" height="24" />
+          </VerticalLayout>
+          <Control />
+          <Label name="pageIndicator" text="步骤 1 / 6" font="3" textcolor="#FF68809A" width="90" align="right" />
+          <Control width="12" />
+          <Progress name="topProgress" min="0" max="100" value="17" width="88" height="4" bkcolor="#FFD5E0EA" forecolor="#FF238BD0" borderround="2,2" />
+        </HorizontalLayout>
+
+        <TabLayout name="wizardPages" bkcolor="#FFF5F8FC">
+          <VerticalLayout name="pageWelcome" bkcolor="#FFF5F8FC" padding="46,34,46,0">
+            <Label name="welcomeEyebrow" text="开始使用" font="4" textcolor="#FF6D7F93" height="18" />
+            <Label name="welcomeProduct" text="欢迎使用" font="2" textcolor="#FF17283D" height="38" />
+            <Control height="10" />
+            <VerticalLayout name="welcomeContent" width="570" height="361">
+              <Control height="126" />
+              <Label name="welcomeCopy" text="这个向导将引导你完成安装配置。" font="6" textcolor="#FF53677C" height="28" />
+              <Label name="welcomeCopySecondary" text="你可以选择安装目录和快捷方式，遇到问题时会自动回滚。" font="6" textcolor="#FF53677C" height="28" />
+              <Control height="24" />
+            <HorizontalLayout name="welcomeStatus" width="570" height="48" childvalign="vcenter" bkcolor="#FFFFFFFF" padding="0,0,0,0" borderround="8,8" bordersize="1" bordercolor="#FFC7D4E2">
+                <Control width="15" />
+                <Label text="准备就绪" font="1" textcolor="#FF24374C" width="72" />
+                <Control width="16" />
+                <Label text="按“下一步”继续" font="3" textcolor="#FF60758C" />
+              </HorizontalLayout>
+            </VerticalLayout>
+            <Control />
+            <HorizontalLayout name="welcomeActions" height="60" childvalign="vcenter" bkcolor="#FFEDF2F7" padding="0,11,0,11" bordercolor="#FFD0DAE5" topbordersize="1">
+              <Control />
+              <Button name="btnWelcomeNext" text="下一步" width="104" height="38" font="1" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" bkimage="button-primary-blue.png" hotimage="button-primary-blue-hot.png" pushedimage="button-primary-blue-down.png" bkcolor="#FF238BD0" borderround="6,6" />
+            </HorizontalLayout>
+          </VerticalLayout>
+
+          <VerticalLayout name="pageLicense" bkcolor="#FFF5F8FC" padding="46,34,46,0">
+            <Label text="确认许可" font="4" textcolor="#FF6D7F93" height="18" />
+            <Label text="使用许可" font="2" textcolor="#FF17283D" height="38" />
+            <Label text="阅读许可协议，确认后继续。" font="0" textcolor="#FF586B80" height="28" />
+            <Control height="20" />
+            <RichEdit name="licenseText" text="本程序使用开源许可证发布。保留版权与许可声明。" height="124" font="3" textcolor="#FF43576C" bkcolor="#FFFFFFFF" padding="16,16,16,16" borderround="8,8" bordersize="1" bordercolor="#FFC7D4E2" multiline="true" readonly="true" vscrollbar="true" />
+            <Control />
+            <HorizontalLayout name="licenseFoot" height="60" childvalign="vcenter" bkcolor="#FFEDF2F7" padding="0,11,0,11" bordercolor="#FFD0DAE5" topbordersize="1">
+              <CheckBox name="acceptLicense" align="left" bkimage="res='checkbox-off.png' dest='0,10,18,28'" selectedimage="res='checkbox-on.png' dest='0,10,18,28'" padding="28,0,0,0" text="我已阅读并同意许可协议" font="3" textcolor="#FF40566E" selected="true" />
+              <Control />
+              <Button name="btnLicenseBack" text="返回" width="104" height="38" font="1" textcolor="#FF344A61" hottextcolor="#FF344A61" bkimage="button-secondary.png" bkcolor="#FFFFFFFF" borderround="6,6" />
+              <Control width="10" />
+              <Button name="btnLicenseNext" text="继续" width="104" height="38" font="1" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" bkimage="button-primary-blue.png" hotimage="button-primary-blue-hot.png" pushedimage="button-primary-blue-down.png" bkcolor="#FF238BD0" borderround="6,6" />
+            </HorizontalLayout>
+          </VerticalLayout>
+
+          <VerticalLayout name="pageComponents" bkcolor="#FFF5F8FC" padding="46,34,46,0">
+            <Label name="componentEyebrow" text="安装内容" font="4" textcolor="#FF6D7F93" height="18" />
+            <Label name="componentTitle" text="选择组件" font="2" textcolor="#FF17283D" height="38" />
+            <Label name="componentLead" text="选择要安装的功能，必选组件无法取消。" font="0" textcolor="#FF586B80" height="28" />
+            <Control height="16" />
+            <HorizontalLayout name="componentToolbar" height="44" childvalign="vcenter" bkcolor="#FFF6F9FC" padding="14,0,14,0" borderround="8,8" bordersize="1" bordercolor="#FFD7E0E9">
+              <CheckBox name="selectAll" width="78" align="left" bkimage="res='checkbox-off.png' dest='0,13,18,31'" selectedimage="res='checkbox-on.png' dest='0,13,18,31'" padding="28,0,0,0" text="全选组件" font="1" textcolor="#FF2D4761" selected="false" />
+              <Control />
+              <Label text="已选空间约 2.3 GB" font="3" textcolor="#FF70849A" width="130" align="right" />
+            </HorizontalLayout>
+            <Control height="6" />
+            <VerticalLayout name="componentTree" bkcolor="#FFFFFFFF" padding="0,5,0,5" borderround="9,9" bordersize="1" bordercolor="#FFC7D4E2">
+              <Label text="运行环境" font="7" textcolor="#FF6D8298" height="24" padding="14,7,0,0" />
+              <HorizontalLayout height="45" childvalign="vcenter" padding="28,5,14,5">
+                <CheckBox name="coreComponent" width="18" text="" bkimage="res='checkbox-off.png' dest='0,8,18,26'" selectedimage="res='checkbox-on.png' dest='0,8,18,26'" selected="true" enabled="false" />
+                <Control width="10" />
+                <VerticalLayout>
+                  <Label text="核心运行库" font="3" textcolor="#FF2D455E" height="17" />
+                  <Label text="必选 · 基础运行文件" font="7" textcolor="#FF7A8DA1" height="17" />
+                </VerticalLayout>
+                <Control />
+                <Label text="1.8 GB" font="7" textcolor="#FF71869A" width="50" align="right" />
+              </HorizontalLayout>
+              <HorizontalLayout height="45" childvalign="vcenter" padding="28,5,14,5">
+                <CheckBox name="cliComponent" width="18" text="" bkimage="res='checkbox-off.png' dest='0,8,18,26'" selectedimage="res='checkbox-on.png' dest='0,8,18,26'" selected="true" />
+                <Control width="10" />
+                <VerticalLayout>
+                  <Label text="命令行工具" font="3" textcolor="#FF304962" height="17" />
+                  <Label text="终端命令与开发工具" font="7" textcolor="#FF7A8DA1" height="17" />
+                </VerticalLayout>
+                <Control />
+                <Label text="320 MB" font="7" textcolor="#FF71869A" width="50" align="right" />
+              </HorizontalLayout>
+              <Label text="开发与资料" font="7" textcolor="#FF6D8298" height="24" padding="14,7,0,0" />
+              <HorizontalLayout height="45" childvalign="vcenter" padding="28,5,14,5">
+                <CheckBox name="sdkComponent" width="18" text="" bkimage="res='checkbox-off.png' dest='0,8,18,26'" selectedimage="res='checkbox-on.png' dest='0,8,18,26'" selected="true" />
+                <Control width="10" />
+                <VerticalLayout>
+                  <Label text="开发 SDK" font="3" textcolor="#FF304962" height="17" />
+                  <Label text="开发接口与集成文件" font="7" textcolor="#FF7A8DA1" height="17" />
+                </VerticalLayout>
+                <Control />
+                <Label text="210 MB" font="7" textcolor="#FF71869A" width="50" align="right" />
+              </HorizontalLayout>
+              <HorizontalLayout height="45" childvalign="vcenter" padding="28,5,14,5">
+                <CheckBox name="docsComponent" width="18" text="" bkimage="res='checkbox-off.png' dest='0,8,18,26'" selectedimage="res='checkbox-on.png' dest='0,8,18,26'" selected="false" />
+                <Control width="10" />
+                <VerticalLayout>
+                  <Label text="示例与文档" font="3" textcolor="#FF304962" height="17" />
+                  <Label text="示例项目和本地文档" font="7" textcolor="#FF7A8DA1" height="17" />
+                </VerticalLayout>
+                <Control />
+                <Label text="90 MB" font="7" textcolor="#FF71869A" width="50" align="right" />
+              </HorizontalLayout>
+            </VerticalLayout>
+            <Control />
+            <HorizontalLayout name="componentActions" height="60" childvalign="vcenter" bkcolor="#FFEDF2F7" padding="0,11,0,11" bordercolor="#FFD0DAE5" topbordersize="1">
+              <Control />
+              <Button name="btnComponentsBack" text="返回" width="104" height="38" font="1" textcolor="#FF344A61" hottextcolor="#FF344A61" bkimage="button-secondary.png" bkcolor="#FFFFFFFF" borderround="6,6" />
+              <Control width="10" />
+              <Button name="btnComponentsNext" text="下一步" width="104" height="38" font="1" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" bkimage="button-primary-blue.png" hotimage="button-primary-blue-hot.png" pushedimage="button-primary-blue-down.png" bkcolor="#FF238BD0" borderround="6,6" />
+            </HorizontalLayout>
+          </VerticalLayout>
+
+          <VerticalLayout name="pageOptions" bkcolor="#FFF5F8FC" padding="46,34,46,0">
+            <Label name="locationEyebrow" text="安装配置" font="4" textcolor="#FF6D7F93" height="18" />
+            <Label name="locationTitle" text="安装位置" font="2" textcolor="#FF17283D" height="38" />
+            <Label name="locationLead" text="选择安装目录和常用入口。" font="0" textcolor="#FF586B80" height="28" />
+            <Control height="28" />
+            <Label text="安装目录" font="3" textcolor="#FF40566E" height="20" />
+            <HorizontalLayout name="pathRow" height="42" childvalign="vcenter">
+              <Edit name="installDirectory" text="C:\Program Files\应用名称" font="3" textcolor="#FF334B63" bkcolor="#FFFFFFFF" borderround="8,8" bordersize="1" bordercolor="#FFBDCAD8" />
+              <Control width="10" />
+              <Button name="btnBrowse" text="选择" width="72" height="38" font="3" textcolor="#FF344A61" hottextcolor="#FF344A61" bkcolor="#FFFFFFFF" hotbkcolor="#FFEAF2F8" borderround="6,6" bordersize="1" bordercolor="#FFAAB9C9" />
+            </HorizontalLayout>
+            <Label text="快捷方式" font="1" textcolor="#FF445A71" height="30" padding="0,12,0,0" />
+            <HorizontalLayout name="taskGrid" height="28" childvalign="vcenter">
+              <CheckBox name="createShortcut" align="left" bkimage="res='checkbox-off.png' dest='0,5,18,23'" selectedimage="res='checkbox-on.png' dest='0,5,18,23'" padding="28,0,0,0" text="创建桌面快捷方式" font="3" textcolor="#FF40566E" selected="true" />
+              <Control width="18" />
+              <CheckBox name="startMenu" align="left" bkimage="res='checkbox-off.png' dest='0,5,18,23'" selectedimage="res='checkbox-on.png' dest='0,5,18,23'" padding="28,0,0,0" text="创建开始菜单入口" font="3" textcolor="#FF40566E" selected="true" />
+            </HorizontalLayout>
+            <Control />
+            <HorizontalLayout name="optionsActions" height="60" childvalign="vcenter" bkcolor="#FFEDF2F7" padding="0,11,0,11" bordercolor="#FFD0DAE5" topbordersize="1">
+              <Control />
+              <Button name="btnOptionsBack" text="返回" width="104" height="38" font="1" textcolor="#FF344A61" hottextcolor="#FF344A61" bkimage="button-secondary.png" bkcolor="#FFFFFFFF" borderround="6,6" />
+              <Control width="10" />
+              <Button name="btnInstall" text="安装" width="104" height="38" font="1" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" bkimage="button-primary-blue.png" hotimage="button-primary-blue-hot.png" pushedimage="button-primary-blue-down.png" bkcolor="#FF238BD0" borderround="6,6" />
+            </HorizontalLayout>
+          </VerticalLayout>
+
+          <VerticalLayout name="pageProgress" bkcolor="#FFF5F8FC" padding="46,34,46,0">
+            <Label name="progressEyebrow" text="正在处理" font="4" textcolor="#FF6D7F93" height="18" />
+            <Label name="progressTitle" text="正在安装" font="2" textcolor="#FF17283D" height="38" />
+            <Label name="installStatus" text="正在准备文件…" font="0" textcolor="#FF586B80" height="28" />
+            <Control height="80" />
+            <HorizontalLayout name="progressWrap" height="90" childvalign="vcenter">
+              <VerticalLayout>
+                <Label name="installPercent" text="0%" font="2" textcolor="#FF1E5F9F" height="48" />
+                <Progress name="installProgress" min="0" max="100" value="0" height="10" bkcolor="#FFCED9E5" forecolor="#FF2E98DC" borderround="5,5" />
+              </VerticalLayout>
+            </HorizontalLayout>
+            <Control />
+            <Label text="请保持窗口打开" font="3" textcolor="#FF60758C" height="24" />
+            <Control />
+            <HorizontalLayout name="progressActions" height="60" childvalign="vcenter" bkcolor="#FFEDF2F7" padding="0,11,0,11" bordercolor="#FFD0DAE5" topbordersize="1">
+              <Button name="btnProgressError" text="模拟失败" width="104" height="38" font="1" textcolor="#FF344A61" hottextcolor="#FF344A61" bkimage="button-secondary.png" bkcolor="#FFFFFFFF" borderround="6,6" />
+              <Control />
+              <Button name="btnProgressContinue" text="继续" width="104" height="38" font="1" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" bkimage="button-primary-blue.png" hotimage="button-primary-blue-hot.png" pushedimage="button-primary-blue-down.png" bkcolor="#FF238BD0" borderround="6,6" />
+            </HorizontalLayout>
+          </VerticalLayout>
+
+          <VerticalLayout name="pageFinish" bkcolor="#FFF5F8FC" padding="46,34,46,0">
+            <Label name="finishEyebrow" text="安装完成" font="4" textcolor="#FF6D7F93" height="18" />
+            <Label name="finishProduct" text="安装已完成。" font="2" textcolor="#FF17283D" height="38" />
+            <Label name="finishLead" text="程序已安装完成。" font="0" textcolor="#FF586B80" height="28" />
+            <Control height="22" />
+            <VerticalLayout name="finishCopy" height="150">
+              <HorizontalLayout name="finishSummary" height="94" childvalign="vcenter" bkcolor="#FFF8FCFA" padding="18,17,18,17" borderround="8,8" bordersize="1" bordercolor="#FFBFD5CA">
+                <Label text="✓" width="32" height="32" font="1" align="center" textcolor="#FFFFFFFF" bkcolor="#FF21AE77" borderround="16,16" />
+                <Control width="13" />
+                <VerticalLayout>
+                  <Label name="finishStatus" text="安装成功" font="1" textcolor="#FF1F5E48" height="24" />
+                  <Label name="finishMessage" text="安装已经完成，现在可以开始使用。" font="3" textcolor="#FF607A70" height="36" />
+                </VerticalLayout>
+              </HorizontalLayout>
+              <Control height="12" />
+              <HorizontalLayout height="38" childvalign="vcenter" bkcolor="#FFF8FAFC" padding="13,0,13,0" borderround="7,7" bordersize="1" bordercolor="#FFD2DCE6">
+                <Label text="安装位置" font="3" textcolor="#FF71849A" width="60" />
+                <Label name="installPath" text="C:\Program Files\应用名称" font="3" textcolor="#FF3D566E" />
+              </HorizontalLayout>
+              <Control height="12" />
+              <CheckBox name="launchNow" align="left" bkimage="res='checkbox-off.png' dest='0,5,18,23'" selectedimage="res='checkbox-on.png' dest='0,5,18,23'" padding="28,0,0,0" text="安装完成后启动应用" font="3" textcolor="#FF40566E" selected="true" height="28" />
+            </VerticalLayout>
+            <Control />
+            <HorizontalLayout name="finishActions" height="60" childvalign="vcenter" bkcolor="#FFEDF2F7" padding="0,11,0,11" bordercolor="#FFD0DAE5" topbordersize="1">
+              <Control />
+              <Button name="btnFinish" text="完成" width="104" height="38" font="1" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" bkimage="button-primary-blue.png" hotimage="button-primary-blue-hot.png" pushedimage="button-primary-blue-down.png" bkcolor="#FF238BD0" borderround="6,6" />
+            </HorizontalLayout>
+          </VerticalLayout>
+
+          <VerticalLayout name="pageError" bkcolor="#FFF5F8FC" padding="46,34,46,0">
+            <Label name="errorEyebrow" text="需要处理" font="4" textcolor="#FF6D7F93" height="18" />
+            <Label name="errorTitle" text="安装未完成" font="2" textcolor="#FF17283D" height="38" />
+            <Label name="errorLead" text="已回滚未完成的文件。" font="0" textcolor="#FF586B80" height="28" />
+            <Control height="34" />
+            <HorizontalLayout name="errorNotice" height="86" childvalign="vcenter" bkcolor="#FFFFF6F7" padding="16,14,16,14" borderround="8,8" bordersize="1" bordercolor="#FFF0C4C9">
+              <Control width="4" bkcolor="#FFDF5B69" borderround="2,2" />
+              <Control width="12" />
+              <VerticalLayout>
+                <Label name="errorStatus" text="已安全回滚" font="1" textcolor="#FF9C3C48" height="24" />
+                <Label name="errorMessage" text="请重试，或查看日志。" font="3" textcolor="#FF8A5C64" height="30" />
+              </VerticalLayout>
+            </HorizontalLayout>
+            <Control />
+            <HorizontalLayout name="errorActions" height="60" childvalign="vcenter" bkcolor="#FFEDF2F7" padding="0,11,0,11" bordercolor="#FFD0DAE5" topbordersize="1">
+              <Control />
+              <Button name="btnRetry" text="再次尝试" width="104" height="38" font="1" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" bkimage="button-primary-blue.png" hotimage="button-primary-blue-hot.png" pushedimage="button-primary-blue-down.png" bkcolor="#FF238BD0" borderround="6,6" />
+            </HorizontalLayout>
+          </VerticalLayout>
+        </TabLayout>
+      </VerticalLayout>
+    </HorizontalLayout>
+  </VerticalLayout>
+</Window>
+
+
+
+
+
+

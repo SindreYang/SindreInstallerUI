@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>安装器</title>
+  <style>
+    @font-face {
+      font-family: "Alibaba PuHuiTi";
+      src: url("resources/skin/fonts/AlibabaPuHuiTi-2-55-Regular.ttf") format("truetype");
+      font-weight: 400;
+    }
+    @font-face {
+      font-family: "Alibaba PuHuiTi";
+      src: url("resources/skin/fonts/AlibabaPuHuiTi-2-75-SemiBold.ttf") format("truetype");
+      font-weight: 600;
+    }
+
+    :root {
+      color-scheme: light;
+      --canvas: #fbfcfe;
+      --ink: #20242c;
+      --yellow: #ffda2f;
+      --yellow-hover: #f6c91b;
+      --line: #e7eaee;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      display: grid;
+      place-items: center;
+      min-width: 980px;
+      min-height: 620px;
+      overflow: hidden;
+      background: #1c1c1c;
+      color: var(--ink);
+      font-family: "Alibaba PuHuiTi", "Microsoft YaHei", sans-serif;
+    }
+    button, input { font: inherit; }
+    button { border: 0; cursor: pointer; }
+
+    .installer {
+      position: relative;
+      width: 1024px;
+      height: 560px;
+      overflow: hidden;
+      background: var(--canvas) url("resources/skin/installer-background-v3.png") center / cover no-repeat;
+      box-shadow: 0 22px 58px rgba(0, 0, 0, .28);
+    }
+    .installer::before,
+    .installer::after,
+    .decor { content: ""; position: absolute; z-index: 0; border-radius: 50%; pointer-events: none; }
+    .installer::before { width: 145px; height: 145px; left: -25px; top: -74px; background: linear-gradient(135deg, #c7f7ff, #a6edf6); }
+    .installer::after { width: 118px; height: 118px; right: -48px; top: 116px; background: linear-gradient(135deg, #fff2bd, #fff9e2); }
+    .decor.one { width: 116px; height: 116px; left: -42px; bottom: -51px; background: linear-gradient(135deg, #c8f5ef, #e4f8bd); }
+    .decor.two { width: 22px; height: 22px; left: 226px; top: 78px; background: linear-gradient(135deg, #b5c5ff, #536af0); box-shadow: 0 3px 8px rgba(59, 87, 224, .2); }
+    .decor.three { width: 16px; height: 16px; left: 148px; bottom: 74px; background: #fff4c4; }
+    .decor.four { width: 38px; height: 38px; right: 54px; bottom: 134px; background: #c5d1ff; opacity: .28; }
+    .installer::before, .installer::after, .decor { display: none; }
+
+    .windowbar {
+      position: absolute;
+      z-index: 3;
+      top: 23px;
+      right: 24px;
+      display: flex;
+      gap: 20px;
+      color: #a1a5aa;
+    }
+    .windowbar button { width: 20px; height: 20px; padding: 0; color: inherit; background: transparent; font-size: 23px; line-height: 15px; font-weight: 300; }
+    .windowbar button:hover { color: #59616b; }
+    .minimize { transform: translateY(-3px); }
+
+    .pages { position: relative; z-index: 1; width: 100%; height: 100%; }
+    .page {
+      position: absolute;
+      inset: 0;
+      display: none;
+      padding: 86px 74px 33px;
+    }
+    .page.active { display: grid; }
+    .welcome { grid-template-columns: 44% 56%; align-items: center; padding-top: 34px; }
+    .hero-mark { display: grid; place-items: center; height: 340px; }
+    .hero-mark img { width: 250px; height: 250px; object-fit: contain; filter: drop-shadow(0 16px 16px rgba(18, 88, 209, .12)); }
+    .hero-copy { padding: 0 54px 0 0; }
+    .hero-copy h1 { margin: 0; font-size: 46px; line-height: 1.2; font-weight: 400; letter-spacing: -.075em; }
+    .primary {
+      min-width: 250px;
+      height: 58px;
+      margin-top: 38px;
+      border-radius: 30px;
+      color: #4e4a28;
+      background: var(--yellow);
+      box-shadow: 0 8px 18px rgba(239, 192, 33, .2);
+      font-size: 18px;
+      font-weight: 600;
+      transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
+    }
+    .primary:hover { transform: translateY(-1px); background: var(--yellow-hover); box-shadow: 0 11px 22px rgba(239, 192, 33, .27); }
+    .bottom-row { position: absolute; left: 25px; right: 25px; bottom: 31px; display: flex; align-items: center; justify-content: space-between; color: #adb3ba; font-size: 14px; }
+    .terms { display: flex; align-items: center; gap: 8px; }
+    .terms input { width: 18px; height: 18px; margin: 0; accent-color: #aeb6bf; }
+    .license-link, .custom-path { color: #a6adb5; text-decoration: none; }
+    .license-link { padding: 0; border-bottom: 1px dotted currentColor; background: transparent; }
+    .license-link:hover, .custom-path:hover { color: #5f6771; }
+    .custom-path { padding: 0; background: transparent; }
+
+    .page:not(.active) { display: none !important; }
+    .options-panel { display: none; margin-top: 18px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, .82); box-shadow: 0 10px 24px rgba(31, 42, 58, .06); }
+    .welcome.options-open .options-panel { display: grid; gap: 11px; }
+    .option-label { color: #89929d; font-size: 13px; }
+    .path { display: flex; gap: 8px; }
+    .path input { flex: 1; min-width: 0; height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 9px; outline: none; color: #65707b; background: #fff; font-size: 13px; }
+    .secondary { min-width: 72px; height: 40px; border: 1px solid var(--line); border-radius: 21px; color: #87909b; background: #fff; font-size: 13px; }
+    .secondary:hover { border-color: #c8ced5; color: #59636e; }
+    .option-check { display: flex; align-items: center; gap: 8px; color: #9ba3ad; font-size: 13px; }
+    .option-check input { width: 16px; height: 16px; accent-color: var(--yellow); }
+    .license-dialog { width: min(520px, calc(100vw - 48px)); padding: 28px; border: 1px solid var(--line); border-radius: 18px; color: var(--ink); background: rgba(255, 255, 255, .97); box-shadow: 0 24px 70px rgba(28, 38, 52, .2); }
+    .license-dialog::backdrop { background: rgba(28, 28, 28, .24); backdrop-filter: blur(5px); }
+    .license-dialog h2 { margin: 0; font-size: 25px; font-weight: 400; letter-spacing: -.04em; }
+    .license-dialog p { margin: 18px 0 24px; color: #727c88; font-size: 14px; line-height: 1.8; }
+    .dialog-close { float: right; width: 28px; height: 28px; margin: -8px -8px 0 0; color: #9da6af; background: transparent; font-size: 22px; line-height: 1; }
+    .dialog-close:hover { color: var(--ink); }
+    .dialog-footer { display: flex; justify-content: flex-end; }
+
+    .flow { grid-template-columns: 56% 44%; align-items: center; gap: 20px; }
+    .flow-copy { padding-left: 30px; }
+    .flow h1 { margin: 0; font-size: 38px; font-weight: 400; letter-spacing: -.06em; }
+    .flow .lead { margin: 14px 0 0; color: #9ba3ad; font-size: 16px; line-height: 1.65; }
+    .flow-art { display: grid; place-items: center; height: 260px; }
+    .flow-art img { width: 190px; max-height: 190px; object-fit: contain; filter: drop-shadow(0 13px 15px rgba(18, 88, 209, .1)); }
+    .flow-footer { position: absolute; left: 104px; right: 74px; bottom: 42px; display: flex; align-items: center; justify-content: space-between; }
+    .flow .primary { min-width: 154px; height: 48px; margin-top: 0; font-size: 15px; }
+    .complete { grid-template-columns: 1fr; align-content: center; justify-items: center; gap: 12px; padding-top: 28px; text-align: center; }
+    .complete .flow-copy { padding-left: 0; }
+    .complete .flow-art { height: 220px; }
+    .complete .flow-art img { width: 200px; max-height: 200px; }
+    .complete .flow-footer { position: static; left: auto; right: auto; bottom: auto; justify-content: center; width: 100%; }
+    .installing { grid-template-columns: 1fr; align-content: center; justify-items: center; gap: 12px; padding-top: 28px; text-align: center; }
+    .installing .flow-copy { width: min(520px, 100%); padding-left: 0; }
+    .installing .flow-art { height: 180px; }
+    .installing .flow-art img { width: 160px; max-height: 160px; }
+    .installing .progress-block { margin-top: 28px; }
+    .progress-block { width: 100%; margin-top: 42px; }
+    .percent { display: flex; align-items: baseline; justify-content: space-between; color: #9ba3ad; }
+    .percent strong { color: #262b33; font-size: 44px; font-weight: 400; letter-spacing: -.08em; }
+    .track { height: 10px; margin-top: 18px; overflow: hidden; border-radius: 99px; background: #edf0f2; }
+    .value { width: 34%; height: 100%; border-radius: inherit; background: var(--yellow); }
+
+    @media (max-height: 680px) { .installer { transform: scale(.92); transform-origin: center; } }
+
+  </style>
+</head>
+<body>
+  <main class="installer" data-app-name="SindrePy" aria-label="通用安装器 HTML 原型">
+    <i class="decor one"></i><i class="decor two"></i><i class="decor three"></i><i class="decor four"></i>
+    <div class="windowbar"><button class="minimize" aria-label="最小化">−</button><button aria-label="关闭">×</button></div>
+    <dialog class="license-dialog" data-license-dialog aria-labelledby="license-title">
+      <button class="dialog-close" type="button" data-license-close aria-label="关闭许可协议">×</button>
+      <h2 id="license-title">许可协议</h2>
+      <p><span data-app-name-text>SindrePy</span> 以开源软件形式提供。你可以在遵守许可条款的前提下使用、复制和分发本软件。完整版权与许可声明随安装包一同提供。</p>
+      <div class="dialog-footer"><button class="secondary" type="button" data-license-close>关闭</button></div>
+    </dialog>
+    <div class="pages">
+      <section class="page welcome active" data-page="0">
+        <div class="hero-mark">
+          <img src="resources/skin/installer-art.png" alt="安装器抽象插画">
+        </div>
+        <div class="hero-copy">
+          <h1>安装 <span data-app-name-text>SindrePy</span></h1>
+          <button class="primary" data-next>开始安装</button>
+          <div class="options-panel" data-options-panel>
+            <label class="option-label" for="install-path">安装目录</label>
+            <div class="path"><input id="install-path" value="C:\Program Files\SindrePy"><button class="secondary" type="button">浏览</button></div>
+            <label class="option-check"><input type="checkbox" checked>创建桌面快捷方式</label>
+            <label class="option-check"><input type="checkbox" checked>创建开始菜单入口</label>
+          </div>
+        </div>
+        <div class="bottom-row"><label class="terms"><input type="checkbox" checked><span>我已阅读并同意</span><button class="license-link" type="button" data-license-open title="双击查看许可协议">许可协议</button></label><button class="custom-path" type="button" data-options>自定义安装 ›</button></div>
+      </section>
+
+      <section class="page flow installing" data-page="1">
+        <div class="flow-art"><img src="resources/skin/progress-glass-ring.png" alt="安装进度"></div>
+        <div class="flow-copy"><h1>正在安装</h1><p class="lead">正在准备文件，请保持窗口打开。</p><div class="progress-block"><div class="percent"><strong>34%</strong><span>正在复制文件</span></div><div class="track"><div class="value"></div></div></div></div>
+      </section>
+
+      <section class="page flow complete" data-page="2">
+        <div class="flow-art"><img src="resources/skin/success-glass-check.png" alt="安装成功"></div>
+        <div class="flow-copy"><h1>安装完成</h1><p class="lead">现在可以使用 <span data-app-name-text>SindrePy</span> 了。</p></div>
+        <div class="flow-footer"><span></span><button class="primary">完成</button></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const installer = document.querySelector(".installer");
+    const appName = installer.dataset.appName || "示例应用";
+    document.title = `安装 ${appName}`;
+    installer.setAttribute("aria-label", `${appName} 安装器 HTML 原型`);
+    document.querySelectorAll("[data-app-name-text]").forEach((node) => { node.textContent = appName; });
+    document.querySelector("#install-path").value = `C:\\Program Files\\${appName}`;
+    const pages = [...document.querySelectorAll("[data-page]")];
+    const welcome = document.querySelector(".welcome");
+    const optionsButton = document.querySelector("[data-options]");
+    const licenseDialog = document.querySelector("[data-license-dialog]");
+    const installValue = document.querySelector(".installing .value");
+    const installPercent = document.querySelector(".installing .percent strong");
+    let current = 0;
+    let installFrame = 0;
+    function showPage(index) {
+      cancelAnimationFrame(installFrame);
+      current = Math.max(0, Math.min(index, pages.length - 1));
+      pages.forEach((page) => page.classList.toggle("active", Number(page.dataset.page) === current));
+      if (current === 1) {
+        const start = performance.now();
+        const duration = 1800;
+        const updateInstall = (now) => {
+          const ratio = Math.min(1, (now - start) / duration);
+          const percent = 34 + Math.round(ratio * 66);
+          installValue.style.width = `${percent}%`;
+          installPercent.textContent = `${percent}%`;
+          if (ratio < 1) installFrame = requestAnimationFrame(updateInstall);
+          else showPage(2);
+        };
+        installFrame = requestAnimationFrame(updateInstall);
+      }
+    }
+    document.addEventListener("click", (event) => {
+      const closeLicense = event.target.closest("[data-license-close]");
+      if (closeLicense) {
+        licenseDialog.close();
+        return;
+      }
+      const target = event.target.closest("[data-next], [data-options]");
+      if (!target) return;
+      event.preventDefault();
+      if (target.dataset.next !== undefined) showPage(current + 1);
+      else {
+        const open = !welcome.classList.contains("options-open");
+        welcome.classList.toggle("options-open", open);
+        optionsButton.textContent = open ? "收起安装选项" : "自定义安装 ›";
+      }
+    });
+    document.addEventListener("dblclick", (event) => {
+      if (event.target.closest("[data-license-open]")) licenseDialog.showModal();
+    });
+    licenseDialog.addEventListener("click", (event) => {
+      if (event.target === licenseDialog) licenseDialog.close();
+    });
+  </script>
+</body>
+</html>
+
+

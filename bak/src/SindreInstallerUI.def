@@ -1,0 +1,11 @@
+LIBRARY SindreInstallerUI
+EXPORTS
+    Init
+    ShowPage
+    SetText
+    SetProgress
+    SetStepProgress
+    GetText
+    GetSelected
+    BindCallback
+    Destroy

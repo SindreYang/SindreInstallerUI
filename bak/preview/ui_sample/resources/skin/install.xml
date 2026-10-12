@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Window size="980,620" mininfo="820,520" roundcorner="16,16" bkcolor="#FF071225" bkimage="glass-background.png">
+  <Font shared="true" id="0" name="阿里巴巴普惠体 2.0 55 Regular" size="11" default="true" />
+  <Font shared="true" id="1" name="阿里巴巴普惠体 2.0 75 SemiBold" size="15" />
+  <Font shared="true" id="2" name="阿里巴巴普惠体 2.0 75 SemiBold" size="22" />
+  <Font shared="true" id="3" name="阿里巴巴普惠体 2.0 55 Regular" size="10" />
+  <Font shared="true" id="4" name="阿里巴巴普惠体 2.0 55 Regular" size="9" />
+
+  <HorizontalLayout name="root" bkimage="glass-background.png">
+    <VerticalLayout name="brandRail" width="220" bkcolor="#E60B1830" padding="22,28,18,22" borderround="18,18" bordersize="1" bordercolor="#4D72B8D4">
+      <Control name="brandMark" width="64" height="64" bkimage="sindre-mark.png" />
+      <Label text="SindrePy" font="1" textcolor="#FFEAF5FF" height="30" />
+      <Label text="WINDOWS 工具平台" font="4" textcolor="#FF91B6D2" height="20" />
+      <Control height="48" />
+      <Label text="安装过程" font="0" textcolor="#FF8FAAC8" height="22" />
+      <Label text="稳定 · 安全 · 可回退" font="1" textcolor="#FFE3F0FF" height="26" />
+      <Label text="" height="22" />
+      <Control height="1" bkcolor="#335C6A9E" />
+      <Control height="22" />
+      <HorizontalLayout name="step0" height="46" padding="0,4,0,4">
+        <Control width="8" bkcolor="#FF6C63FF" borderround="4,4" />
+        <Control width="14" />
+        <Label text="欢迎" font="0" textcolor="#FFDDE8F7" />
+      </HorizontalLayout>
+      <HorizontalLayout name="step1" height="46" padding="0,4,0,4">
+        <Control width="8" bkcolor="#335C6A9E" borderround="4,4" />
+        <Control width="14" />
+        <Label text="许可" font="0" textcolor="#FF8FA9C9" />
+      </HorizontalLayout>
+      <HorizontalLayout name="step2" height="46" padding="0,4,0,4">
+        <Control width="8" bkcolor="#335C6A9E" borderround="4,4" />
+        <Control width="14" />
+        <Label text="位置" font="0" textcolor="#FF8FA9C9" />
+      </HorizontalLayout>
+      <HorizontalLayout name="step3" height="46" padding="0,4,0,4">
+        <Control width="8" bkcolor="#335C6A9E" borderround="4,4" />
+        <Control width="14" />
+        <Label text="安装" font="0" textcolor="#FF8FA9C9" />
+      </HorizontalLayout>
+      <HorizontalLayout name="step4" height="46" padding="0,4,0,4">
+        <Control width="8" bkcolor="#335C6A9E" borderround="4,4" />
+        <Control width="14" />
+        <Label text="完成" font="0" textcolor="#FF8FA9C9" />
+      </HorizontalLayout>
+      <Control />
+      <Label text="SindrePy  ·  Windows" font="3" textcolor="#FF7F8CB8" />
+    </VerticalLayout>
+
+    <VerticalLayout name="content" width="520" bkcolor="#D90B1830" padding="28,24,28,22" borderround="18,18" bordersize="1" bordercolor="#4D72B8D4">
+      <HorizontalLayout height="52">
+        <VerticalLayout>
+          <Label text="SINDREPY" font="4" textcolor="#FF8EA8C7" height="16" />
+          <Label name="windowTitle" text="SindrePy 安装" font="1" textcolor="#FFEAF5FF" height="28" />
+        </VerticalLayout>
+        <Control />
+        <Label name="pageIndicator" text="01 / 05" font="4" textcolor="#FF8EA8C7" width="54" align="right" />
+        <Control width="10" />
+        <Button name="btnClose" text="×" width="34" height="34" font="1" textcolor="#CCFFFFFF" hottextcolor="#FFFFFFFF" bkcolor="#00000000" hotbkcolor="#33406A91" borderround="17,17" />
+      </HorizontalLayout>
+      <Control height="18" />
+      <TabLayout name="wizardPages">
+        <VerticalLayout name="pageWelcome" bkcolor="#F012203A" padding="30,18,30,16" borderround="18,18" bordersize="1" bordercolor="#665C7FA8">
+          <Label text="开始使用" font="4" textcolor="#FF8EA8C7" height="16" />
+          <Label text="安装 SindrePy" font="2" textcolor="#FFEAF5FF" height="36" />
+          <Label text="Windows 工具平台 · 稳定、可回退" font="0" textcolor="#BFD6E3F2" height="24" />
+          <Control height="4" />
+          <HorizontalLayout height="140">
+            <Control />
+            <Control name="welcomeArt" width="210" bkimage="hero-glass-prism.png" />
+            <Control />
+          </HorizontalLayout>
+          <HorizontalLayout height="26">
+            <Control width="8" bkcolor="#FF6C63FF" borderround="4,4" />
+            <Control width="8" />
+            <Label text="准备开始" font="1" textcolor="#FFE3F0FF" />
+          </HorizontalLayout>
+          <Control height="6" />
+          <HorizontalLayout height="44" padding="14,8,14,8" bkcolor="#66304D70" borderround="14,14" bordersize="1" bordercolor="#4D72B8D4">
+            <Label text="准备完成" font="0" textcolor="#FFE3F0FF" width="90" />
+            <Label text="点击开始进入安装" font="3" textcolor="#BFD6E3F2" />
+          </HorizontalLayout>
+          <HorizontalLayout height="40" padding="0,2,10,0">
+            <Control />
+            <Button name="btnWelcomeNext" text="开始" width="160" height="40" font="0" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" normalimage="button-primary.png" hotimage="button-primary-hot.png" pushedimage="button-primary-down.png" />
+          </HorizontalLayout>
+        </VerticalLayout>
+
+        <VerticalLayout name="pageLicense" bkcolor="#F012203A" padding="28,16,28,14" borderround="18,18" bordersize="1" bordercolor="#665C7FA8">
+          <Label text="使用许可" font="2" textcolor="#FFDDE8F7" height="42" />
+          <Label text="阅读许可协议，确认后继续。" font="0" textcolor="#BFD6E3F2" height="30" />
+          <HorizontalLayout height="78">
+            <Control />
+            <Control name="licenseArt" width="120" bkimage="license-glass-shield.png" />
+            <Control />
+          </HorizontalLayout>
+          <Control height="8" />
+          <RichEdit name="licenseText" text="SindrePy 使用开源许可证发布。保留版权与许可声明。" height="108" font="3" textcolor="#FFDCE8F4" bkcolor="#66304D70" borderround="12,12" bordersize="1" bordercolor="#4D72B8D4" multiline="true" readonly="true" vscrollbar="true" />
+          <Control height="8" />
+          <HorizontalLayout height="40">
+            <CheckBox name="acceptLicense" text="我已阅读并同意许可协议" font="3" textcolor="#FFDCE8F4" selected="true" />
+            <Control />
+            <Button name="btnLicenseNext" text="继续" width="128" height="42" font="0" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" bkcolor="#FF5B56E8" hotbkcolor="#FF4540C6" borderround="12,12" />
+          </HorizontalLayout>
+        </VerticalLayout>
+
+        <VerticalLayout name="pageOptions" bkcolor="#F012203A" padding="28,16,28,14" borderround="18,18" bordersize="1" bordercolor="#665C7FA8">
+          <Label text="安装位置" font="2" textcolor="#FFDDE8F7" height="42" />
+          <Label text="选择安装目录和快捷方式。" font="0" textcolor="#BFD6E3F2" height="30" />
+          <HorizontalLayout height="78">
+            <Control />
+            <Control name="optionsArt" width="138" bkimage="options-glass-controls.png" />
+            <Control />
+          </HorizontalLayout>
+          <Control height="10" />
+          <Label text="安装目录" font="0" textcolor="#FFE3F0FF" height="24" />
+          <HorizontalLayout height="44" padding="0,6,0,0">
+            <Edit name="installDirectory" text="C:\Program Files\SindrePy" font="3" textcolor="#FFDCE8F4" bkcolor="#66304D70" borderround="10,10" bordersize="1" bordercolor="#4D72B8D4" />
+            <Control width="12" />
+            <Button name="btnBrowse" text="选择" width="84" height="38" font="3" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" bkcolor="#66406A91" hotbkcolor="#997B6DFF" borderround="10,10" />
+          </HorizontalLayout>
+          <Control height="18" />
+          <CheckBox name="createShortcut" text="创建桌面快捷方式" font="3" textcolor="#FFDCE8F4" align="left" textpadding="42,0,0,0" normalimage="file='checkbox-off.png' dest='0,0,32,32'" selectedimage="file='checkbox-on.png' dest='0,0,32,32'" selected="true" height="32" />
+          <CheckBox name="startMenu" text="创建开始菜单入口" font="3" textcolor="#FFDCE8F4" align="left" textpadding="42,0,0,0" normalimage="file='checkbox-off.png' dest='0,0,32,32'" selectedimage="file='checkbox-on.png' dest='0,0,32,32'" selected="true" height="32" />
+          <HorizontalLayout height="48">
+            <Control />
+            <Button name="btnInstall" text="安装" width="160" height="42" font="0" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" bkcolor="#FF5B56E8" hotbkcolor="#FF4540C6" borderround="12,12" />
+          </HorizontalLayout>
+        </VerticalLayout>
+
+        <VerticalLayout name="pageProgress" bkcolor="#F012203A" padding="34,34,34,28" borderround="18,18" bordersize="1" bordercolor="#665C7FA8">
+          <Label text="正在安装" font="2" textcolor="#FFEAF5FF" height="42" />
+          <Label name="installStatus" text="正在准备文件..." font="0" textcolor="#BFD6E3F2" height="30" />
+          <HorizontalLayout height="142">
+            <Control />
+            <Control name="progressArt" width="170" bkimage="progress-glass-ring.png" />
+            <Control />
+          </HorizontalLayout>
+          <Control height="12" />
+          <Progress name="installProgress" min="0" max="100" value="34" height="12" bkcolor="#66304D70" forecolor="#FF7B6DFF" borderround="6,6" />
+          <Control height="16" />
+          <Label name="installPercent" text="34%" font="1" textcolor="#FF5B56E8" height="36" />
+          <Control />
+          <Label text="请保持窗口打开" font="3" textcolor="#99D1DDF0" height="28" />
+        </VerticalLayout>
+
+        <VerticalLayout name="pageFinish" bkcolor="#F012203A" padding="34,34,34,28" borderround="18,18" bordersize="1" bordercolor="#665C7FA8">
+          <Label text="安装完成" font="2" textcolor="#FFEAF5FF" height="42" />
+          <Label text="SindrePy 已安装完成。" font="0" textcolor="#BFD6E3F2" height="30" />
+          <HorizontalLayout height="118">
+            <Control />
+            <Control name="successArt" width="170" bkimage="success-glass-check.png" />
+            <Control />
+          </HorizontalLayout>
+          <Control height="8" />
+          <HorizontalLayout height="78" padding="20,12,20,12" bkcolor="#55318F86" borderround="14,14" bordersize="1" bordercolor="#4D72B8D4">
+            <Control width="12" bkcolor="#FF21B77A" borderround="6,6" />
+            <Control width="18" />
+            <VerticalLayout>
+              <Label text="安装已验证" font="0" textcolor="#FFB9FFE3" height="30" />
+              <Label text="快捷方式与卸载入口已准备完成。" font="3" textcolor="#FF9EE6C6" />
+            </VerticalLayout>
+          </HorizontalLayout>
+          <HorizontalLayout height="48">
+            <Control />
+            <Button name="btnFinish" text="完成" width="112" height="42" font="0" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" bkcolor="#FF21B77A" hotbkcolor="#FF129363" borderround="12,12" />
+          </HorizontalLayout>
+        </VerticalLayout>
+
+        <VerticalLayout name="pageError" bkcolor="#F012203A" padding="34,34,34,28" borderround="18,18" bordersize="1" bordercolor="#665C7FA8">
+          <Label text="安装未完成" font="2" textcolor="#FFEAF5FF" height="42" />
+          <Label text="已回滚未完成的文件。" font="0" textcolor="#BFD6E3F2" height="30" />
+          <HorizontalLayout height="94">
+            <Control />
+            <Control name="errorArt" width="140" bkimage="error-glass-warning.png" />
+            <Control />
+          </HorizontalLayout>
+          <Control height="14" />
+          <HorizontalLayout height="98" padding="20,12,20,12" bkcolor="#553D416A" borderround="14,14" bordersize="1" bordercolor="#4D72B8D4">
+            <Control width="12" bkcolor="#FFE15363" borderround="6,6" />
+            <Control width="18" />
+            <VerticalLayout>
+              <Label text="已安全回滚" font="0" textcolor="#FFFFB8C0" height="30" />
+              <Label text="请重试，或查看日志。" font="3" textcolor="#FFFFA6B2" />
+            </VerticalLayout>
+          </HorizontalLayout>
+          <HorizontalLayout height="48">
+            <Control />
+            <Button name="btnRetry" text="再次尝试" width="122" height="42" font="0" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" bkcolor="#FFE15363" hotbkcolor="#FFC6384B" borderround="12,12" />
+          </HorizontalLayout>
+        </VerticalLayout>
+      </TabLayout>
+    </VerticalLayout>
+  </HorizontalLayout>
+</Window>
+
+
+
+
+
