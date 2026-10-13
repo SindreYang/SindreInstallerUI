@@ -15,7 +15,8 @@ SindreInstallerUI 是一个面向 Windows 软件的通用安装器主题项目�
 - **支持首次安装和升级**：NSIS 使用固定安装目录和卸载注册表项，重复运行同一应用安装包即可覆盖升级。
 - **支持静默部署**：NSIS 原生支持 `/S`，安装器和生成的卸载器都可以静默运行。
 - **支持可选组件**：模板启用 MUI2 组件页，调用方可在后续模板扩展中拆分组件。
-- **支持失败回退**：构建阶段记录 NSIS 日志；安装阶段由 NSIS 和 uv 返回码阻止继续安装。
+- **支持源故障回退**：国内镜像按候选顺序重试，全部失败后自动切换官方 PyPI；所有源失败才停止安装。
+- **原生程序不携带 uv**：只有 `.py` 或 Python 依赖模式才会把 uv 放入安装目录。
 
 ## 当前方向
 
@@ -76,6 +77,10 @@ F:\My_Github\SindreInstallerUI\bak\preview\ui_sample\index.html
 ![Full 安装完成](tmp/screenshots/full/06-finish.png)
 
 ![Full 错误回滚](tmp/screenshots/full/07-error.png)
+
+![Python 依赖安装与源回退日志（历史失败场景）](tmp/screenshots/full/08-python-dependency-fallback.png)
+
+上图记录了旧安装包在清华源返回错误时的日志。当前版本会继续尝试阿里云、腾讯云、中科大、华为云，最后回退到官方 PyPI；只有全部源失败才会显示错误对话框。
 
 ### Simple
 
@@ -181,6 +186,19 @@ F:\My_Github\SindreInstallerUI\tools\nsis
 ```
 
 正式 Python 构建入口为 `sindre_installer.build_installer`，不提供独立 CLI。
+
+## 演示项目
+
+本地演示项目位于 `F:\tmp\SindreInstallerDemos`，包含两种输入目录：
+
+```text
+SindreInstallerDemos/
+├─ pyqt5_app/       # main.py + pyproject.toml + uv.lock + 资源
+├─ native_app/      # DemoApp.exe + thirdparty.dll + assets/config
+└─ outputs/         # 已生成的安装包
+```
+
+PyQt5 演示可以使用 `uv run --project . python main.py --self-test` 自检；原生演示可以执行 `native_app\build.ps1` 后运行 `DemoApp.exe`。两个项目的完整调用示例见该目录的 `README.md`。
 
 ## 历史内容
 
