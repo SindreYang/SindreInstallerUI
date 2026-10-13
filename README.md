@@ -1,264 +1,302 @@
 # SindreInstallerUI
 
-SindreInstallerUI 是一个面向 Windows 软件的通用安装器主题项目，目标是使用 **NSIS + Modern UI 2（MUI2）** 提供稳定、可复用的安装、升级和卸载流程。
+一个面向 Windows 的通用安装器构建包。
 
-项目当前处于 **开发中**。现阶段优先确定原生 NSIS/MUI2 的页面结构、资源规范和安装流程，暂不维护自定义 DLL 主题运行时。
+它使用 **NSIS + MUI2** 生成安装包，支持普通 EXE 程序，也支持 Python/uv 项目。调用方只需要提供一个启动文件，安装器会把同目录下的 DLL、资源和配置一起打包。
 
-`SindrePy` 只是原型中的示例产品名。最终接入其他软件时，应替换产品名称、版本号、图标、许可协议、安装目录和实际 payload。
+> 当前版本仍在开发中，适合测试和内部发布。正式发布前请在目标 Windows 环境上重新验收。
 
-## 目标特性
+## 你可以用它做什么
 
-当前 Python API 已实现以下能力：
-
-- **支持 2GB 以上安装内容**：大体积 payload 不塞入单个传统 NSIS 数据块，改用安装包旁的外置分卷或分块文件，安装前检查旁路目录，安装过程中按块和归档 SHA-256 校验后提取。
-- **支持 uv Python 环境**：把调用方提供的 Python 目录和项目文件放入 payload，安装时使用内置 uv 根据 `pyproject.toml`、`uv.lock` 同步依赖，也可以按指定版本准备 Python。
-- **支持首次安装和升级**：NSIS 使用固定安装目录和卸载注册表项，重复运行同一应用安装包即可覆盖升级。
-- **支持静默部署**：NSIS 原生支持 `/S`，安装器和生成的卸载器都可以静默运行。
-- **支持可选组件**：模板启用 MUI2 组件页，调用方可在后续模板扩展中拆分组件。
-- **支持源故障回退**：国内镜像按候选顺序重试，全部失败后自动切换官方 PyPI；所有源失败才停止安装。
-- **原生程序不携带 uv**：只有 `.py` 或 Python 依赖模式才会把 uv 放入安装目录。
-
-## 当前方向
-
-当前只推进原生 NSIS/MUI2 方案：
-
-- 使用 NSIS 负责安装器打包、文件复制、注册表和卸载器生成。
-- 使用 MUI2 提供欢迎、许可、组件、安装目录、安装进度和完成页面。
-- 使用同一套脚本支持首次安装、已有版本升级和静默安装。
-- 将产品信息、许可文本、图标、组件和 payload 作为脚本或资源配置维护。
-- 保持安装器可以脱离 SindrePy、DuiLib 和自定义 UI DLL 独立构建。
-
-## 开发状态
-
-| 模块 | 状态 | 说明 |
+| 输入程序 | 传入的文件 | 安装时的启动方式 |
 | --- | --- | --- |
-| Full 原型 | 已归档 | 用于记录完整安装流程和页面布局 |
-| Simple 原型 | 已归档 | 用于记录精简安装流程和页面布局 |
-| 原生 MUI2 页面 | 已实现 | `libs/templates/installer.nsi.template` 使用内置 MUI2 页面 |
-| 安装流程 | 已验证 | 已验证首次安装、升级覆盖、静默安装和静默卸载 |
-| 组件管理 | 基础实现 | 模板启用组件页，具体组件由 payload 和后续配置决定 |
-| 图标和资源 | 已实现 | wheel 包含 NSIS、uv、默认图标、模板和许可证 |
-| 自动化测试 | 基础实现 | 包含 API 单元测试及 Windows 实际编译、安装和旁路 payload 验证 |
+| 普通 Windows 程序 | `DemoApp.exe` | 直接启动 EXE，不携带 uv |
+| Python/uv 程序 | `main.py` | 使用内置 uv 创建环境并运行 Python |
 
-当前 Python 包版本为 `0.1.0`，仍在开发中；生成的安装包应先在目标 Windows 环境和测试账号中验收。
+安装器还支持：
 
-## 原型页面
+- 首次安装、覆盖升级和卸载
+- 静默安装：`/S`
+- MUI2 欢迎、许可、组件、目录、进度和完成页面
+- 2GB 以上 payload 的旁路分卷模式
+- Python 依赖安装进度显示
+- 国内镜像失败后自动切换其他镜像，最后回退官方 PyPI
 
-原型页面保存在 `bak` 中，直接打开对应的 `index.html`：
+## 5 分钟快速开始
 
-- Full：[`bak/preview/ui_full/index.html`](bak/preview/ui_full/index.html)
-- Simple：[`bak/preview/ui_sample/index.html`](bak/preview/ui_sample/index.html)
+### 1. 安装构建包
 
-本机路径：
+在 Windows 终端执行：
 
-```text
-F:\My_Github\SindreInstallerUI\bak\preview\ui_full\index.html
-F:\My_Github\SindreInstallerUI\bak\preview\ui_sample\index.html
+```powershell
+uv pip install .
 ```
 
-这些页面用于确认视觉结构和页面状态，不作为当前安装器的运行时依赖。
+包内已经包含 NSIS、uv、模板和默认资源，不需要单独安装 `makensis.exe`。
 
-## 原型截图
+### 2. 打包普通 EXE 程序
 
-截图由上面两个 `index.html` 生成，统一放在 `tmp/screenshots`，按主题和页面分组。
-
-### Full
-
-![Full 欢迎页](tmp/screenshots/full/01-welcome.png)
-
-![Full 许可页](tmp/screenshots/full/02-license.png)
-
-![Full 组件页](tmp/screenshots/full/03-components.png)
-
-![Full 安装位置](tmp/screenshots/full/04-location.png)
-
-![Full 安装进度](tmp/screenshots/full/05-progress.png)
-
-![Full 安装完成](tmp/screenshots/full/06-finish.png)
-
-![Full 错误回滚](tmp/screenshots/full/07-error.png)
-
-![Python 依赖安装与源回退日志（历史失败场景）](tmp/screenshots/full/08-python-dependency-fallback.png)
-
-上图记录了旧安装包在清华源返回错误时的日志。当前版本会继续尝试阿里云、腾讯云、中科大、华为云，最后回退到官方 PyPI；只有全部源失败才会显示错误对话框。
-
-### Simple
-
-![Simple 欢迎页](tmp/screenshots/simple/01-welcome.png)
-
-![Simple 安装中](tmp/screenshots/simple/02-installing.png)
-
-![Simple 安装完成](tmp/screenshots/simple/03-complete.png)
-
-![Simple 许可弹窗](tmp/screenshots/simple/04-license.png)
-
-![Simple 安装选项](tmp/screenshots/simple/05-options.png)
-
-## 目录说明
+假设目录如下：
 
 ```text
-SindreInstallerUI/
-├─ sindre_installer/        # Python API 包
-│  └─ libs/                 # 内置 NSIS、uv、模板和默认资源
-├─ bak/                    # 历史原型、自定义主题和旧源码
-│  └─ preview/
-│     ├─ ui_full/          # Full 原型 index.html
-│     └─ ui_sample/        # Simple 原型 index.html
-├─ third_party/nsis/       # NSIS 相关第三方文件
-├─ tools/                  # 构建和验证工具
-│  └─ nsis/                # NSIS 工具文件
-├─ tmp/
-│  └─ screenshots/         # README 使用的原型截图
-└─ README.md
+F:\Demo\build\Release\
+├─ DemoApp.exe
+├─ DemoApp.dll
+├─ thirdparty.dll
+├─ assets\
+└─ config\
 ```
 
-`bak` 中的内容只用于追溯和对照，不参与当前原生安装器运行。
-
-## 原生安装器计划
-
-### 1. 页面流程
-
-标准安装流程按以下顺序实现：
-
-```text
-欢迎
-  → 许可协议
-  → 选择组件
-  → 安装目录与快捷方式
-  → 安装进度
-  → 安装完成
-```
-
-同时提供：
-
-- 检测已有安装并进入升级流程。
-- 保留用户数据、配置和已有快捷方式。
-- 安装失败时显示错误信息并清理已写入内容。
-- 静默安装和静默卸载。
-- 支持取消、返回和关闭窗口。
-
-### 2. 组件模型
-
-每个组件需要定义：
-
-- 组件名称和说明。
-- 是否必选。
-- 安装文件或目录。
-- 占用空间。
-- 是否支持升级时保留。
-- 组件被取消时需要清理的文件。
-
-核心运行库等基础组件应设为必选，开发工具、SDK、示例和文档可以作为可选组件。
-
-### 3. 产品配置
-
-后续会把以下内容集中到产品配置区域：
-
-- 产品名称和发布者。
-- 版本号。
-- 安装目录默认值。
-- 安装器图标和卸载器图标。
-- 许可协议文本。
-- 开始菜单和桌面快捷方式。
-- 是否注册 Windows 服务。
-- 是否设置开机自启。
-- 安装完成后是否启动应用。
-
-### 4. 验证范围
-
-每次调整页面或脚本后，需要至少验证：
-
-1. 新安装能正确写入 payload。
-2. 安装目录、快捷方式和注册表信息正确。
-3. 再次运行安装包能识别已有版本。
-4. 升级不会删除用户数据和配置。
-5. 卸载后文件、快捷方式和注册表项清理完成。
-6. 静默参数不会弹出交互页面。
-7. 取消和异常路径不会留下半安装状态。
-
-## 构建说明
-
-Python API 会从 wheel 内定位固定版本的 NSIS 和 uv，不要求调用方预先安装工具。仓库中的原始工具目录仍保留用于审计：
-
-```text
-F:\My_Github\SindreInstallerUI\third_party\nsis
-F:\My_Github\SindreInstallerUI\tools\nsis
-```
-
-正式 Python 构建入口为 `sindre_installer.build_installer`，不提供独立 CLI。
-
-## 演示项目
-
-本地演示项目位于 `F:\tmp\SindreInstallerDemos`，包含两种输入目录：
-
-```text
-SindreInstallerDemos/
-├─ pyqt5_app/       # main.py + pyproject.toml + uv.lock + 资源
-├─ native_app/      # DemoApp.exe + thirdparty.dll + assets/config
-└─ outputs/         # 已生成的安装包
-```
-
-PyQt5 演示可以使用 `uv run --project . python main.py --self-test` 自检；原生演示可以执行 `native_app\build.ps1` 后运行 `DemoApp.exe`。两个项目的完整调用示例见该目录的 `README.md`。
-
-## 历史内容
-
-`bak` 保存切换到原生 NSIS/MUI2 前的内容，包括：
-
-- Full 和 Simple HTML 原型。
-- 自定义 DLL 主题及其 XML、图片和字体资源。
-- `SindreInstallerUI.dll` 插件源码。
-- DuiLib、CMake、旧构建目录和历史发布产物。
-
-这些内容保留用于视觉比对和实现追溯，不属于当前正在开发的原生安装器版本。
-
-## Python API 打包器
-
-当前原生构建入口是 `sindre_installer` Python 包，不提供独立 CLI。包内自带固定版本的 NSIS 和 uv，调用方不需要预先安装这两个工具。
-
-支持两类应用目录：
-
-- 常规 Windows 程序：目录中有 `DemoApp.exe`、DLL 和资源目录时，传入 `executable=Path("DemoApp.exe")`，自动使用原生 EXE 启动。
-- Python/uv 程序：目录中有 `main.py`、模块、资源和配置时，传入 `executable=Path("main.py")`，自动使用内置 uv 启动；也可以不传 `executable`，并设置 `run_mode="uv"` 与 `python_entrypoint="main.py"`。uv 模式不需要另写 `launcher.exe`，安装器会生成 `run-app.cmd`。
-
-`run_mode="auto"` 按启动文件后缀选择模式：`.py` 使用 uv，`.exe` 使用原生启动。依赖同步在 NSIS 安装页内自动执行，安装页会显示 Python 环境、依赖（例如 numpy）和完成状态；uv 控制台不会单独弹出。
-
-`source="official"` 使用官方 PyPI，`source="tsinghua"` 使用清华源并在失败时依次尝试阿里云、腾讯云、中科大、华为云，最后回退到官方 PyPI；`source="domestic"` 使用同一组国内候选源，`source="custom"` 需要同时提供 `uv_index_url` 和 `pip_index_url`。源地址会写入安装脚本的 `uv sync`/`uv pip sync`，并写入 Python 应用的 `run-app.cmd`。
-
-最简调用只需要传入启动文件，版本默认为 `1.0.0`，输出目录默认为 `dist`，应用名和 payload 目录会自动推断：
+Python 调用：
 
 ```python
 from pathlib import Path
 from sindre_installer import pack_exe
 
-# F:/Demo/build/Release/DemoApp.exe 旁边的 DLL、assets、config 会一起打包
-result = pack_exe(Path("F:/Demo/build/Release/DemoApp.exe"))
-
-# .py 自动使用 uv，F:/Demo/app 下的模块和资源会一起打包
-result = pack_exe(Path("F:/Demo/app/main.py"), source="domestic")
+result = pack_exe(
+    Path(r"F:\Demo\build\Release\DemoApp.exe"),
+    Path(r"F:\Demo\release"),
+)
 print(result.installer_path)
 ```
 
-需要完整控制时再使用配置对象：
+结果是一个 NSIS 安装包，例如：
+
+```text
+F:\Demo\release\DemoApp-1.0.0-setup.exe
+```
+
+`DemoApp.exe` 同目录下的 DLL、`assets` 和 `config` 会一起复制。普通 EXE 模式不会把 `uv.exe` 放进安装目录。
+
+### 3. 打包 Python/uv 程序
+
+假设目录如下：
+
+```text
+F:\Demo\app\
+├─ main.py
+├─ pyproject.toml
+├─ uv.lock
+├─ modules\
+├─ assets\
+└─ config\
+```
+
+Python 调用：
+
+```python
+from pathlib import Path
+from sindre_installer import pack_exe
+
+result = pack_exe(
+    Path(r"F:\Demo\app\main.py"),
+    Path(r"F:\Demo\release"),
+    source="domestic",
+)
+print(result.installer_path)
+```
+
+安装阶段会：
+
+1. 复制 Python 源码、模块、资源和配置。
+2. 复制内置 `uv.exe`。
+3. 根据 `pyproject.toml` 和 `uv.lock` 创建 `.venv`。
+4. 自动安装 PyQt5、numpy 等依赖。
+5. 生成 `run-app.cmd`，用于启动程序。
+
+不需要另外编写 `launcher.exe`。
+
+## 软件源策略
+
+`source="domestic"` 和 `source="tsinghua"` 的尝试顺序是：
+
+```text
+清华源
+  → 阿里云
+  → 腾讯云
+  → 中科大
+  → 华为云
+  → 官方 PyPI
+```
+
+任意一个源成功，安装继续；全部源失败，安装器才会停止并显示错误。
+
+可用配置：
+
+| 配置 | 作用 |
+| --- | --- |
+| `official` | 只使用官方 PyPI |
+| `domestic` | 国内候选源，最后回退官方 PyPI |
+| `tsinghua` | 清华源优先，失败后使用同一组候选源 |
+| `custom` | 使用调用方提供的自定义 uv/pip 源 |
+
+自定义源示例：
+
+```python
+from pathlib import Path
+
+from sindre_installer import pack_exe
+
+result = pack_exe(
+    Path(r"F:\Demo\app\main.py"),
+    Path(r"F:\Demo\release"),
+    source="custom",
+    uv_index_url="https://example.com/uv/simple",
+    pip_index_url="https://example.com/pip/simple",
+)
+```
+
+安装器也支持运行时覆盖：
+
+```text
+/SINDRE_SOURCE=official
+/SINDRE_SOURCE=domestic
+/SINDRE_UV_INDEX=https://example.com/simple
+/SINDRE_PIP_INDEX=https://example.com/simple
+```
+
+## 两种模式的区别
+
+### 普通 EXE 模式
+
+- 启动文件后缀是 `.exe`
+- 直接复制并启动 EXE
+- 不执行 uv
+- 不安装 Python 依赖
+- 不携带 `uv.exe`
+
+### Python/uv 模式
+
+- 启动文件后缀是 `.py`
+- 自动使用内置 uv
+- 依赖在安装阶段同步
+- 安装失败会阻止完成安装
+- 安装完成页可以启动 `run-app.cmd`
+
+也可以显式指定：
 
 ```python
 from pathlib import Path
 from sindre_installer import InstallerConfig, build_installer
 
-result = build_installer(InstallerConfig(
-    app_name="DemoApp",
-    version="2.0.0",
-    executable=Path("dist/DemoApp.exe"),
-    output_dir=Path("release"),
-    payload_dir=Path("dist/app"),
-    source="official",
-))
+result = build_installer(
+    InstallerConfig(
+        app_name="DemoApp",
+        version="2.0.0",
+        executable=Path(r"F:\Demo\app\main.py"),
+        output_dir=Path(r"F:\Demo\release"),
+        source="domestic",
+    )
+)
 ```
 
-支持的源配置为 `official`、`tsinghua`、`domestic` 和 `custom`。国内源会在当前源返回 403、超时或解析失败时自动按候选顺序重试，全部国内源失败后回退到官方 PyPI。安装器也支持 `/SINDRE_SOURCE=official`、`/SINDRE_SOURCE=tsinghua`、`/SINDRE_UV_INDEX=` 和 `/SINDRE_PIP_INDEX=` 参数覆盖默认源。
+## 演示项目
 
-当项目包含 `pyproject.toml` 时，安装阶段调用内置 uv 同步项目；`uv.lock` 作为解析输入使用，但允许在切换软件源时更新 registry 元数据。只有 `requirements.txt` 时使用 `uv pip sync`。指定 `python_version` 后，安装器可以在目标机通过 uv 准备 Python 环境。
+本地演示项目位于：
 
-payload 小于阈值时直接嵌入 NSIS 安装包；超过阈值时生成安装器和旁路分块目录，安装器会在复制前校验旁路 payload。旁路目录必须和安装器一起分发。
+```text
+F:\tmp\SindreInstallerDemos
+```
+
+目录中包含：
+
+```text
+SindreInstallerDemos\
+├─ pyqt5_app\       # PyQt5 + uv 源码项目
+├─ native_app\      # EXE + DLL + assets/config
+├─ outputs\         # 已生成的安装包
+└─ README.md         # 演示项目使用说明
+```
+
+PyQt5 自检：
+
+```powershell
+cd F:\tmp\SindreInstallerDemos\pyqt5_app
+uv run --project . python main.py --self-test
+```
+
+原生程序编译和运行：
+
+```powershell
+cd F:\tmp\SindreInstallerDemos\native_app
+.\build.ps1
+.\build\Release\DemoApp.exe
+```
+
+## 当前开发状态
+
+| 模块 | 状态 |
+| --- | --- |
+| 原生 NSIS/MUI2 页面 | 已实现 |
+| 普通 EXE + DLL 打包 | 已验证 |
+| Python/uv 自动依赖安装 | 已验证 |
+| 国内源候选和官方回退 | 已实现并验证 |
+| 首次安装、升级、卸载 | 已实现基础流程 |
+| 静默安装和卸载 | 已验证 |
+| 2GB+ 旁路 payload | 已实现基础流程 |
+| Full/Simple 自定义主题 | 已归档，仅用于视觉参考 |
+
+当前 Python 包版本：`0.1.0`。
+
+## 原型和截图
+
+Full 和 Simple 原型已经归档，不参与当前安装器运行：
+
+- [Full 原型](bak/preview/ui_full/index.html)
+- [Simple 原型](bak/preview/ui_sample/index.html)
+
+截图位于 [`tmp/screenshots`](tmp/screenshots)。使用折叠区域查看，避免 README 页面被大图撑开。
+
+### Full 主题
+
+<details>
+<summary>展开 Full 页面截图</summary>
+
+<p><img src="tmp/screenshots/full/01-welcome.png" width="520" alt="Full 欢迎页"></p>
+<p><img src="tmp/screenshots/full/02-license.png" width="520" alt="Full 许可页"></p>
+<p><img src="tmp/screenshots/full/03-components.png" width="520" alt="Full 组件页"></p>
+<p><img src="tmp/screenshots/full/04-location.png" width="520" alt="Full 安装位置"></p>
+<p><img src="tmp/screenshots/full/05-progress.png" width="520" alt="Full 安装进度"></p>
+<p><img src="tmp/screenshots/full/06-finish.png" width="520" alt="Full 安装完成"></p>
+<p><img src="tmp/screenshots/full/07-error.png" width="520" alt="Full 错误回滚"></p>
+
+</details>
+
+### Simple 主题
+
+<details>
+<summary>展开 Simple 页面截图</summary>
+
+<p><img src="tmp/screenshots/simple/01-welcome.png" width="520" alt="Simple 欢迎页"></p>
+<p><img src="tmp/screenshots/simple/02-installing.png" width="520" alt="Simple 安装中"></p>
+<p><img src="tmp/screenshots/simple/03-complete.png" width="520" alt="Simple 安装完成"></p>
+<p><img src="tmp/screenshots/simple/04-license.png" width="520" alt="Simple 许可弹窗"></p>
+<p><img src="tmp/screenshots/simple/05-options.png" width="520" alt="Simple 安装选项"></p>
+
+</details>
+
+### Python 依赖安装日志
+
+<p><img src="tmp/screenshots/full/08-python-dependency-fallback.png" width="520" alt="Python 依赖安装与源回退日志"></p>
+
+这张图记录的是旧安装包在清华源不可用时的失败日志。当前版本会继续尝试国内候选源，最后回退到官方 PyPI。
+
+## 项目目录
+
+```text
+SindreInstallerUI\
+├─ sindre_installer\        # Python API 包
+│  └─ libs\                  # NSIS、uv、模板、默认资源和许可证
+├─ tests\                    # API 单元测试
+├─ tools\                    # 本地验证工具
+├─ third_party\              # 第三方工具审计文件
+├─ bak\                      # 历史原型和旧主题源码
+└─ tmp\screenshots\         # README 使用的截图
+```
+
+`bak` 只用于视觉比对和历史追溯，不参与当前原生安装器运行。
+
+## 构建和测试
 
 构建 wheel：
 
@@ -266,4 +304,27 @@ payload 小于阈值时直接嵌入 NSIS 安装包；超过阈值时生成安装
 uv build --wheel
 ```
 
-Python API 目前处于开发中，调用前需要在 Windows 环境验证目标 EXE、Python 依赖和网络源。
+运行测试：
+
+```powershell
+uv run --no-project python -m unittest discover -s tests -v
+```
+
+构建入口是 Python 函数，不提供独立 CLI：
+
+```python
+from sindre_installer import pack_exe, build_installer
+```
+
+NSIS、uv、模板和默认图标会从包内自动定位。修改安装脚本后，应至少验证：
+
+1. 新安装能写入完整 payload。
+2. Python 依赖可以成功安装。
+3. 再次运行可以覆盖升级。
+4. 卸载能清理程序文件和注册表项。
+5. 静默参数不会弹出交互页面。
+6. 失败和取消不会留下半安装状态。
+
+## 历史内容
+
+`bak` 保存早期的 Full/Simple HTML 原型、自定义 DLL 主题、DuiLib、CMake 和旧构建产物。它们保留用于实现追溯，不属于当前原生 NSIS/MUI2 方案。
