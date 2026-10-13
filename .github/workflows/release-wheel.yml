@@ -1,0 +1,81 @@
+name: Build wheel and attach to Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "可选：将 wheel 上传到已有 Release 的 tag，例如 v0.1.0"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-wheel:
+    name: Build and publish wheel
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Build wheel
+        run: |
+          python -m pip install --upgrade build
+          python -m build --wheel --outdir dist
+
+      - name: Verify wheel resources
+        shell: python
+        run: |
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          wheels = sorted(Path("dist").glob("*.whl"))
+          if len(wheels) != 1:
+              raise SystemExit(f"期望生成一个 wheel，实际生成 {len(wheels)} 个")
+
+          required = {
+              "sindre_installer/libs/nsis/windows-x64/makensis.exe",
+              "sindre_installer/libs/nsis/windows-x64/Include/MUI2.nsh",
+              "sindre_installer/libs/uv/windows-x64/uv.exe",
+              "sindre_installer/libs/templates/installer.nsi.template",
+              "sindre_installer/libs/assets/default-install.ico",
+          }
+          with ZipFile(wheels[0]) as archive:
+              names = set(archive.namelist())
+          missing = sorted(required - names)
+          if missing:
+              raise SystemExit("wheel 缺少资源：" + ", ".join(missing))
+
+          print(f"已验证 wheel：{wheels[0]}")
+          for path in sorted(required):
+              print(f"  包含：{path}")
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sindre-installer-wheel
+          path: dist/*.whl
+          if-no-files-found: error
+
+      - name: Attach wheel to published Release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$RELEASE_TAG" dist/*.whl --repo "$GITHUB_REPOSITORY" --clobber
+
+      - name: Attach wheel to manually selected Release
+        if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: gh release upload "$RELEASE_TAG" dist/*.whl --repo "$GITHUB_REPOSITORY" --clobber

@@ -298,6 +298,19 @@ SindreInstallerUI\
 
 ## 构建和测试
 
+## 发布 wheel
+
+仓库包含 [`release-wheel.yml`](.github/workflows/release-wheel.yml)。创建并发布 GitHub Release 后，Actions 会自动：
+
+1. 构建 `sindre-installer` wheel。
+2. 检查 wheel 中是否包含 NSIS、MUI2、uv、模板和默认图标。
+3. 保存一份 Actions 构建产物。
+4. 把 wheel 自动附加到当前 Release 的附件列表。
+
+发布前先修改 [`pyproject.toml`](pyproject.toml) 中的版本号，再创建对应的 Release。例如版本号为 `0.1.1` 时，Release tag 使用 `v0.1.1`。
+
+也可以在 Actions 页面手动运行 `Build wheel and attach to Release`。不填写 Release tag 时只构建并保存 artifact；填写已有 tag 后，会把 wheel 上传到对应 Release。
+
 构建 wheel：
 
 ```powershell
