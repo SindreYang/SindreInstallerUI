@@ -14,7 +14,7 @@
             output_dir=Path("release"),
             python_dir=Path("python"),
             python_project=Path("python"),
-            source="tsinghua",
+            source="official",
         )
     )
     print(result.installer_path)
@@ -62,12 +62,16 @@ class SourceProfile:
         uv_index_url: uv 项目同步使用的索引地址。
         pip_index_url: uv pip 子命令使用的索引地址。
         python_mirror_url: uv 安装 Python 时使用的镜像地址，可选。
+        uv_fallback_urls: uv 同步失败时依次尝试的备用索引。
+        pip_fallback_urls: uv pip 同步失败时依次尝试的备用索引。
     """
 
     name: str
     uv_index_url: str
     pip_index_url: str
     python_mirror_url: str | None = None
+    uv_fallback_urls: tuple[str, ...] = ()
+    pip_fallback_urls: tuple[str, ...] = ()
 
 
 SOURCE_PROFILES = {
@@ -80,6 +84,39 @@ SOURCE_PROFILES = {
         name="tsinghua",
         uv_index_url="https://pypi.tuna.tsinghua.edu.cn/simple",
         pip_index_url="https://pypi.tuna.tsinghua.edu.cn/simple",
+        uv_fallback_urls=(
+            "https://mirrors.aliyun.com/pypi/simple/",
+            "https://mirrors.cloud.tencent.com/pypi/simple",
+            "https://pypi.mirrors.ustc.edu.cn/simple",
+            "https://repo.huaweicloud.com/repository/pypi/simple",
+            "https://pypi.org/simple",
+        ),
+        pip_fallback_urls=(
+            "https://mirrors.aliyun.com/pypi/simple/",
+            "https://mirrors.cloud.tencent.com/pypi/simple",
+            "https://pypi.mirrors.ustc.edu.cn/simple",
+            "https://repo.huaweicloud.com/repository/pypi/simple",
+            "https://pypi.org/simple",
+        ),
+    ),
+    "domestic": SourceProfile(
+        name="domestic",
+        uv_index_url="https://pypi.tuna.tsinghua.edu.cn/simple",
+        pip_index_url="https://pypi.tuna.tsinghua.edu.cn/simple",
+        uv_fallback_urls=(
+            "https://mirrors.aliyun.com/pypi/simple/",
+            "https://mirrors.cloud.tencent.com/pypi/simple",
+            "https://pypi.mirrors.ustc.edu.cn/simple",
+            "https://repo.huaweicloud.com/repository/pypi/simple",
+            "https://pypi.org/simple",
+        ),
+        pip_fallback_urls=(
+            "https://mirrors.aliyun.com/pypi/simple/",
+            "https://mirrors.cloud.tencent.com/pypi/simple",
+            "https://pypi.mirrors.ustc.edu.cn/simple",
+            "https://repo.huaweicloud.com/repository/pypi/simple",
+            "https://pypi.org/simple",
+        ),
     ),
 }
 
@@ -99,7 +136,7 @@ class InstallerConfig:
         requirements_file: 可选的 requirements 文件。
         python_version: 没有内置 Python 时由 uv 安装的版本。
         python_entrypoint: uv 模式下启动的项目相对路径，例如 ``main.py``。
-        source: ``official``、``tsinghua`` 或 ``custom``。
+        source: ``official``、``tsinghua``、``domestic`` 或 ``custom``。
         uv_index_url: 自定义 uv 索引地址。
         pip_index_url: 自定义 uv pip 索引地址。
         python_mirror_url: uv Python 发行版镜像地址。
@@ -219,6 +256,8 @@ def _resolve_profile(config: InstallerConfig) -> SourceProfile:
             uv_index_url=config.uv_index_url or base.uv_index_url,
             pip_index_url=config.pip_index_url or base.pip_index_url,
             python_mirror_url=config.python_mirror_url or base.python_mirror_url,
+            uv_fallback_urls=() if config.uv_index_url else base.uv_fallback_urls,
+            pip_fallback_urls=() if config.pip_index_url else base.pip_fallback_urls,
         )
     if config.source == "custom":
         if not config.uv_index_url or not config.pip_index_url:
@@ -229,7 +268,7 @@ def _resolve_profile(config: InstallerConfig) -> SourceProfile:
             pip_index_url=config.pip_index_url,
             python_mirror_url=config.python_mirror_url,
         )
-    raise ValueError("source 必须是 official、tsinghua 或 custom")
+    raise ValueError("source 必须是 official、tsinghua、domestic 或 custom")
 
 
 def validate_config(config: InstallerConfig) -> None:
@@ -359,7 +398,16 @@ def _stage_payload(
     if config.payload_dir:
         _copy_tree_contents(config.payload_dir, payload)
 
-    shutil.copy2(uv_path, payload / "uv.exe")
+    run_mode = _effective_run_mode(config)
+    needs_uv = bool(
+        run_mode == "uv"
+        or config.python_dir
+        or config.python_project
+        or config.requirements_file
+        or config.python_version
+    )
+    if needs_uv:
+        shutil.copy2(uv_path, payload / "uv.exe")
 
     python_target: Path | None = None
     if config.python_dir:
@@ -377,7 +425,7 @@ def _stage_payload(
         requirements_target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(config.requirements_file, requirements_target)
 
-    if _effective_run_mode(config) == "uv":
+    if run_mode == "uv":
         if project_target is None:
             raise ValueError("uv 模式必须有可运行的项目目录")
         entrypoint = config.python_entrypoint
@@ -530,6 +578,33 @@ FunctionEnd'''
     )
     python_function = ""
     python_call = ""
+
+    def append_index_attempts(
+        lines: list[str],
+        command_template: str,
+        fallback_urls: tuple[str, ...],
+        success_label: str,
+    ) -> None:
+        """为依赖同步生成主源和备用源的顺序重试代码。"""
+
+        indexes = ("$SindreUvIndex", *fallback_urls)
+        for index in indexes:
+            command = command_template.replace("@INDEX@", index)
+            lines.extend(
+                [
+                    f'  StrCpy $SindreCommand \'{command}\'',
+                    "  Call RunUvCommandSoft",
+                    f'  StrCmp $SindreExitCode "0" {success_label}',
+                ]
+            )
+        lines.extend(
+            [
+                '  MessageBox MB_ICONSTOP|MB_OK "所有配置的软件源均不可用。请检查网络、软件源或安装日志。"',
+                "  Abort",
+                f"{success_label}:",
+            ]
+        )
+
     if has_python:
         python_lines = [
             "Function PreparePython",
@@ -551,15 +626,19 @@ FunctionEnd'''
             )
         if config.python_project or config.payload_dir or config.python_dir:
             source_project = config.python_project or config.payload_dir or config.python_dir
-            lock_flag = "--locked " if (source_project / "uv.lock").is_file() else ""
-            python_lines.extend(
-                [
-                    f'  IfFileExists "{project_root}\\pyproject.toml" 0 python_requirements',
-                    f'  StrCpy $SindreCommand \'"$INSTDIR\\uv.exe" sync --project "{project_root}" {lock_flag}--default-index "$SindreUvIndex"\'',
-                    "  Call RunUvCommand",
-                    "  Return",
-                ]
+            # 安装器允许通过 /SINDRE_SOURCE 和 /SINDRE_UV_INDEX 切换源。
+            # uv.lock 记录了生成时的 registry，使用 --locked 会让源切换
+            # 在安装阶段直接失败，因此把锁文件作为解析输入但允许 uv
+            # 按当前源更新其 registry 元数据。
+            lock_flag = ""
+            python_lines.append(f'  IfFileExists "{project_root}\\pyproject.toml" 0 python_requirements')
+            append_index_attempts(
+                python_lines,
+                f'"$INSTDIR\\uv.exe" sync --project "{project_root}" {lock_flag}--default-index "@INDEX@"',
+                profile.uv_fallback_urls,
+                "uv_sync_success",
             )
+            python_lines.append("  Return")
         python_lines.append("python_requirements:")
         if config.requirements_file:
             req_path = "python\\requirements.txt" if config.python_dir else "requirements.txt"
@@ -568,12 +647,12 @@ FunctionEnd'''
                 if config.python_dir and not config.python_version
                 else f'"{project_root}\\.venv\\Scripts\\python.exe"'
             )
-            python_lines.extend(
-                [
-                    f'  IfFileExists "$INSTDIR\\{req_path}" 0 python_done',
-                    f'  StrCpy $SindreCommand \'"$INSTDIR\\uv.exe" pip sync --python {python_arg} "$INSTDIR\\{req_path}" --index-url "$SindrePipIndex"\'',
-                    "  Call RunUvCommand",
-                ]
+            python_lines.append(f'  IfFileExists "$INSTDIR\\{req_path}" 0 python_done')
+            append_index_attempts(
+                python_lines,
+                f'"$INSTDIR\\uv.exe" pip sync --python {python_arg} "$INSTDIR\\{req_path}" --index-url "@INDEX@"',
+                profile.pip_fallback_urls,
+                "pip_sync_success",
             )
         if config.requirements_file:
             python_lines.extend([

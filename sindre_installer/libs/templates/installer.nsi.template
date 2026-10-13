@@ -57,9 +57,14 @@ FunctionEnd
 
 Function ResolveSource
   StrCmp $SindreSource "tsinghua" source_tsinghua
+  StrCmp $SindreSource "domestic" source_domestic
   StrCmp $SindreSource "official" source_official
   Return
 source_tsinghua:
+  StrCpy $SindreUvIndex "https://pypi.tuna.tsinghua.edu.cn/simple"
+  StrCpy $SindrePipIndex "https://pypi.tuna.tsinghua.edu.cn/simple"
+  Return
+source_domestic:
   StrCpy $SindreUvIndex "https://pypi.tuna.tsinghua.edu.cn/simple"
   StrCpy $SindrePipIndex "https://pypi.tuna.tsinghua.edu.cn/simple"
   Return
@@ -88,6 +93,20 @@ Function RunUvCommand
 uv_failed:
   MessageBox MB_ICONSTOP|MB_OK "安装器命令执行失败。请检查网络、软件源或安装日志。"
   Abort
+FunctionEnd
+
+Function RunUvCommandSoft
+  nsExec::ExecToLog $SindreCommand
+  Pop $SindreExitCode
+  StrCmp $SindreExitCode "0" uv_soft_success
+  StrCpy $0 "60"
+  StrCpy $1 "当前软件源不可用，正在尝试备用源（最后为官方 PyPI）..."
+  Call SetDependencyProgress
+  Return
+uv_soft_success:
+  StrCpy $0 "95"
+  StrCpy $1 "Python 依赖安装完成"
+  Call SetDependencyProgress
 FunctionEnd
 
 @@SIDECAR_FUNCTION@@

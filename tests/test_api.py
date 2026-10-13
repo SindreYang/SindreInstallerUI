@@ -26,6 +26,15 @@ class ApiTests(unittest.TestCase):
             InstallerConfig("Demo", "1.0.0", TEST_EXE, Path("F:/tmp/test-output"), source="tsinghua")
         )
         self.assertIn("tuna.tsinghua.edu.cn", profile.pip_index_url)
+        self.assertTrue(any("mirrors.aliyun.com" in url for url in profile.pip_fallback_urls))
+        self.assertEqual(profile.pip_fallback_urls[-1], "https://pypi.org/simple")
+
+    def test_domestic_profile_has_candidates(self) -> None:
+        profile = _resolve_profile(
+            InstallerConfig("Demo", "1.0.0", TEST_EXE, Path("F:/tmp/test-output"), source="domestic")
+        )
+        self.assertGreaterEqual(len(profile.uv_fallback_urls), 3)
+        self.assertEqual(profile.uv_fallback_urls[-1], "https://pypi.org/simple")
 
     def test_custom_profile_requires_both_indexes(self) -> None:
         with self.assertRaises(ValueError):

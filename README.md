@@ -11,7 +11,7 @@ SindreInstallerUI 是一个面向 Windows 软件的通用安装器主题项目�
 当前 Python API 已实现以下能力：
 
 - **支持 2GB 以上安装内容**：大体积 payload 不塞入单个传统 NSIS 数据块，改用安装包旁的外置分卷或分块文件，安装前检查旁路目录，安装过程中按块和归档 SHA-256 校验后提取。
-- **支持 uv Python 环境**：把调用方提供的 Python 目录和项目文件放入 payload，安装时使用内置 uv 执行锁定同步或 `uv pip sync`，也可以按指定版本准备 Python。
+- **支持 uv Python 环境**：把调用方提供的 Python 目录和项目文件放入 payload，安装时使用内置 uv 根据 `pyproject.toml`、`uv.lock` 同步依赖，也可以按指定版本准备 Python。
 - **支持首次安装和升级**：NSIS 使用固定安装目录和卸载注册表项，重复运行同一应用安装包即可覆盖升级。
 - **支持静默部署**：NSIS 原生支持 `/S`，安装器和生成的卸载器都可以静默运行。
 - **支持可选组件**：模板启用 MUI2 组件页，调用方可在后续模板扩展中拆分组件。
@@ -204,7 +204,7 @@ F:\My_Github\SindreInstallerUI\tools\nsis
 
 `run_mode="auto"` 按启动文件后缀选择模式：`.py` 使用 uv，`.exe` 使用原生启动。依赖同步在 NSIS 安装页内自动执行，安装页会显示 Python 环境、依赖（例如 numpy）和完成状态；uv 控制台不会单独弹出。
 
-`source="official"` 使用官方 PyPI，`source="tsinghua"` 使用清华源，`source="custom"` 需要同时提供 `uv_index_url` 和 `pip_index_url`。源地址会写入安装脚本的 `uv sync`/`uv pip sync`，并写入 Python 应用的 `run-app.cmd`。
+`source="official"` 使用官方 PyPI，`source="tsinghua"` 使用清华源并在失败时依次尝试阿里云、腾讯云、中科大、华为云，最后回退到官方 PyPI；`source="domestic"` 使用同一组国内候选源，`source="custom"` 需要同时提供 `uv_index_url` 和 `pip_index_url`。源地址会写入安装脚本的 `uv sync`/`uv pip sync`，并写入 Python 应用的 `run-app.cmd`。
 
 最简调用只需要传入启动文件，版本默认为 `1.0.0`，输出目录默认为 `dist`，应用名和 payload 目录会自动推断：
 
@@ -216,7 +216,7 @@ from sindre_installer import pack_exe
 result = pack_exe(Path("F:/Demo/build/Release/DemoApp.exe"))
 
 # .py 自动使用 uv，F:/Demo/app 下的模块和资源会一起打包
-result = pack_exe(Path("F:/Demo/app/main.py"), source="tsinghua")
+result = pack_exe(Path("F:/Demo/app/main.py"), source="domestic")
 print(result.installer_path)
 ```
 
@@ -236,9 +236,9 @@ result = build_installer(InstallerConfig(
 ))
 ```
 
-支持的源配置为 `official`、`tsinghua` 和 `custom`。安装器也支持 `/SINDRE_SOURCE=official`、`/SINDRE_SOURCE=tsinghua`、`/SINDRE_UV_INDEX=` 和 `/SINDRE_PIP_INDEX=` 参数覆盖默认源。
+支持的源配置为 `official`、`tsinghua`、`domestic` 和 `custom`。国内源会在当前源返回 403、超时或解析失败时自动按候选顺序重试，全部国内源失败后回退到官方 PyPI。安装器也支持 `/SINDRE_SOURCE=official`、`/SINDRE_SOURCE=tsinghua`、`/SINDRE_UV_INDEX=` 和 `/SINDRE_PIP_INDEX=` 参数覆盖默认源。
 
-当项目包含 `pyproject.toml` 时，安装阶段调用内置 uv 同步项目；存在 `uv.lock` 时使用锁定同步。只有 `requirements.txt` 时使用 `uv pip sync`。指定 `python_version` 后，安装器可以在目标机通过 uv 准备 Python 环境。
+当项目包含 `pyproject.toml` 时，安装阶段调用内置 uv 同步项目；`uv.lock` 作为解析输入使用，但允许在切换软件源时更新 registry 元数据。只有 `requirements.txt` 时使用 `uv pip sync`。指定 `python_version` 后，安装器可以在目标机通过 uv 准备 Python 环境。
 
 payload 小于阈值时直接嵌入 NSIS 安装包；超过阈值时生成安装器和旁路分块目录，安装器会在复制前校验旁路 payload。旁路目录必须和安装器一起分发。
 
